@@ -218,7 +218,8 @@ plot.survFitTKTD <- function(x,
           facet_wrap(~conc) +
           labs(x = xlab, y = ylab) + ggtitle(main) +
           ylim(c(0, 1)) +
-          theme_minimal()
+          theme_minimal() +
+          scale_color_discrete(guide = "none")
       } else {
         plt1 <- ggplot(data$dobs,
                        aes(x = t, y = psurv, colour = factor(conc))) +
@@ -230,7 +231,8 @@ plot.survFitTKTD <- function(x,
           facet_wrap(~conc) +
           labs(x = xlab, y = ylab) + ggtitle(main) +
           ylim(c(0, 1)) +
-          theme_minimal()
+          theme_minimal() +
+          scale_color_discrete(guide = "none")
       }
     }
     plt1
