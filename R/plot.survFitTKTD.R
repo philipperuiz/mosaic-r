@@ -140,7 +140,7 @@ plot.survFitTKTD <- function(x,
                              style = "generic", ...) {
   
   data <- survFitPlotDataTKTD(x)
-  if (ci) {
+  if (ci && !one.plot) {
     dataCI <- survFitPlotCITKTD(x)
     dataCIm <- melt(dataCI, id.vars = c("conc", "time"))
   }
@@ -205,7 +205,7 @@ plot.survFitTKTD <- function(x,
     if (one.plot) {
       if (ci) warning("Credible intervals are only evalables in grid plot !")
       plt1 <- ggplot(data$dobs, aes(x = t, y = psurv, colour = factor(conc))) +
-        geom_point() + geom_line(data = data$dtheo, colour = "red") +
+        geom_point() + geom_line(data = data$dtheo) +
         labs(x = xlab, y = ylab) + ggtitle(main) +
         ylim(c(0, 1)) +
         theme_minimal()
