@@ -4,6 +4,8 @@
 #' @param xlab A label for the \eqn{X}-axis, by default \code{Concentrations}.
 #' @param ylab A label for the \eqn{Y}-axis, by default \code{Survival rate}.
 #' @param main A main title for the plot.
+#' @param ci if \code{TRUE}, draws the 95 \% credible limits of the fitted curve.
+#' @param one.plot if \code{TRUE}, draw all the estimeted curves in one plot.
 #' @param style Graphical method: \code{generic} or \code{ggplot}.
 #' @param \dots Further arguments to be passed to generic methods.
 #' 
@@ -21,12 +23,7 @@ plot.survFitTKTD <- function(x,
                              xlab = "Time",
                              ylab = "Survival rate",
                              main = NULL,
-                             fitlty = 1,
-                             fitlwd = 1,
                              ci = FALSE,
-                             cicol = "pink1",
-                             cilty = 1,
-                             cilwd = 1,
                              one.plot = TRUE,
                              addlegend = FALSE,
                              style = "generic", ...) {
@@ -40,8 +37,7 @@ plot.survFitTKTD <- function(x,
   if (style == "generic") {
     survFitPlotTKTDGeneric(data, xlab, ylab, main, one.plot, ci, dataCIm)
   }
-  
-  if (style == "ggplot") {
+  else if (style == "ggplot") {
     survFitPlotTKTDGG(data, xlab, ylab, main, one.plot, ci, dataCI, dataCIm)
   }
   else stop("Unknown style")
@@ -166,7 +162,7 @@ survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot, ci, dataCIm
   } else {
     par(mfrow = plotMatrixGeometry(length(unique(data[["dobs"]][["conc"]]))))
     
-    survFitPlotTKTDGenericNoOnePlot(data, xlab, ylab, main, ci, dataCIm)
+    survFitPlotTKTDGenericNoOnePlot(data, xlab, ylab, ci, dataCIm)
     
     par(mfrow = c(1, 1))
   }
@@ -188,15 +184,15 @@ survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main) {
      })
 }
 
-survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, main, ci, dataCIm) {
+survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, ci, dataCIm) {
   if (ci) {
-    survFitPlotTKTDGenericNoOnePlotCi(data, xlab, ylab, main, dataCIm)
+    survFitPlotTKTDGenericNoOnePlotCi(data, xlab, ylab, dataCIm)
   } else {
-    survFitPlotTKTDGenericNoOnePlotNoCi(data, xlab, ylab, main)
+    survFitPlotTKTDGenericNoOnePlotNoCi(data, xlab, ylab)
   }
 }
 
-survFitPlotTKTDGenericNoOnePlotCi <- function(data, xlab, ylab, main, dataCIm) {
+survFitPlotTKTDGenericNoOnePlotCi <- function(data, xlab, ylab, dataCIm) {
   # one line by replicate
   by(data[["dtheo"]], list(data[["dtheo"]]$conc),
      function(x) {
@@ -206,14 +202,13 @@ survFitPlotTKTDGenericNoOnePlotCi <- function(data, xlab, ylab, main, dataCIm) {
             ylab = ylab,
             type = "n",
             ylim = c(0, 1),
-            col = x[, "color"],
-            main = main)
+            col = x[, "color"])
        lines(x[, "t"], x[, "psurv"], # lines
              col = x[, "color"])
      })
 }
 
-survFitPlotTKTDGenericNoOnePlotNoCi <- function(data, xlab, ylab, main) {
+survFitPlotTKTDGenericNoOnePlotNoCi <- function(data, xlab, ylab) {
   # one line by replicate
   by(data[["dtheo"]], list(data[["dtheo"]]$conc),
      function(x) {
@@ -224,8 +219,8 @@ survFitPlotTKTDGenericNoOnePlotNoCi <- function(data, xlab, ylab, main) {
             type = "n",
             ylim = c(0, 1),
             col = x[, "color"],
-            main = main)
-       lines(x[, "t"], x[, "psurv"], # lines
+            main = paste0("Concentration : ", unique(x[, "conc"])))
+       lines(x[, "t"], x[, "psurv"],
              col = x[, "color"])
      })
 }
@@ -237,28 +232,30 @@ survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, ci, dataCI,
     if (ci) warning("Credible intervals are only evalables in grid plot !")
     survFitPlotTKTDGGOnePlot(data, xlab, ylab, main)
   } else {
-    survFitPlotTKTDGGNoOnePlot(data, xlab, ylab, main, ci, dataCI, dataCIm)
+    survFitPlotTKTDGGNoOnePlot(data, xlab, ylab, ci, dataCI, dataCIm)
   }
 }
 
 survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main) {
   ggplot(data$dobs, aes(x = t, y = psurv, colour = factor(conc))) +
-    geom_point() + geom_line(data = data$dtheo) +
+    geom_point() +
+    scale_color_discrete("Concentrations") +
+    geom_line(data = data$dtheo) +
     labs(x = xlab, y = ylab) + ggtitle(main) +
     ylim(c(0, 1)) +
     theme_minimal()
 }
 
-survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, main, ci, dataCI,
+survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, ci, dataCI,
                                        dataCIm) {
   if (ci) {
-    survFitPlotTKTDGGNoOnePlotCi(data, xlab, ylab, main, dataCI, dataCIm)
+    survFitPlotTKTDGGNoOnePlotCi(data, xlab, ylab, dataCI, dataCIm)
   } else {
-    survFitPlotTKTDGGNoOnePlotNoCi(data, xlab, ylab, main)
+    survFitPlotTKTDGGNoOnePlotNoCi(data, xlab, ylab)
   }
 }
 
-survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
+survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, dataCI,
                                          dataCIm) {
   ggplot(data$dobs,
          aes(x = t, y = psurv, colour = factor(conc))) +
@@ -268,19 +265,19 @@ survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
     geom_line(data = dataCI, aes(x = time, y = qinf95), linetype = 'dashed', color = "black") +
     geom_line(data = dataCI, aes(x = time, y = qsup95), linetype = 'dashed', color = "black") +
     facet_wrap(~conc) +
-    labs(x = xlab, y = ylab) + ggtitle(main) +
+    labs(x = xlab, y = ylab) +
     ylim(c(0, 1)) +
     theme_minimal() +
     scale_color_discrete(guide = "none")
 }
 
-survFitPlotTKTDGGNoOnePlotNoCi <- function(data, xlab, ylab, main) {
+survFitPlotTKTDGGNoOnePlotNoCi <- function(data, xlab, ylab) {
   ggplot(data$dobs,
          aes(x = t, y = psurv, colour = factor(conc))) +
     geom_point() +
     geom_line(data = data$dtheo, colour = "red") +
     facet_wrap(~conc) +
-    labs(x = xlab, y = ylab) + ggtitle(main) +
+    labs(x = xlab, y = ylab) +
     ylim(c(0, 1)) +
     theme_minimal() +
     scale_color_discrete(guide = "none")
