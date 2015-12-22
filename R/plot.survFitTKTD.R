@@ -6,6 +6,7 @@
 #' @param main A main title for the plot.
 #' @param ci if \code{TRUE}, draws the 95 \% credible limits of the fitted curve.
 #' @param one.plot if \code{TRUE}, draw all the estimeted curves in one plot.
+#' @param addlegend if \code{TRUE}, adds a default legend to the plot.
 #' @param style Graphical method: \code{generic} or \code{ggplot}.
 #' @param \dots Further arguments to be passed to generic methods.
 #' 
@@ -35,10 +36,12 @@ plot.survFitTKTD <- function(x,
                                          id.vars = c("conc", "time")) } else NULL
   
   if (style == "generic") {
-    survFitPlotTKTDGeneric(data, xlab, ylab, main, one.plot, ci, dataCIm)
+    survFitPlotTKTDGeneric(data, xlab, ylab, main, one.plot, ci, dataCIm,
+                           addlegend)
   }
   else if (style == "ggplot") {
-    survFitPlotTKTDGG(data, xlab, ylab, main, one.plot, ci, dataCI, dataCIm)
+    survFitPlotTKTDGG(data, xlab, ylab, main, one.plot, ci, dataCI, dataCIm,
+                      addlegend)
   }
   else stop("Unknown style")
 }
@@ -152,13 +155,14 @@ survFitPlotCITKTD <- function(x) {
   return(dtheof)
 }
 
-survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot, ci, dataCIm) {
+survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot, ci, dataCIm,
+                                   addlegend) {
   # vector color
   data[["dobs"]]$color <- as.numeric(as.factor(data[["dobs"]][["conc"]]))
   data[["dtheo"]]$color <- as.numeric(as.factor(data[["dtheo"]][["conc"]]))
   
   if (one.plot) {
-    survFitPlotTKTDGenericOnePlot(data, xlab, ylab, main)
+    survFitPlotTKTDGenericOnePlot(data, xlab, ylab, main, addlegend)
   } else {
     par(mfrow = plotMatrixGeometry(length(unique(data[["dobs"]][["conc"]]))))
     
@@ -168,7 +172,7 @@ survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot, ci, dataCIm
   }
 }
 
-survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main) {
+survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main, addlegend) {
   plot(data[["dobs"]][["t"]],
        data[["dobs"]][["psurv"]],
        xlab = xlab,
@@ -182,6 +186,16 @@ survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main) {
        lines(x$t, x$psurv, # lines
              col = x$color)
      })
+  if (addlegend) {
+    legend("bottomleft",
+           legend = unique(data[["dobs"]]$conc),
+           pch = 16,
+           bty = "n",
+           cex = 1,
+           ncol = 2,
+           col = unique(data[["dobs"]]$color),
+           title = "Concentrations")
+  }
 }
 
 survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, ci, dataCIm) {
@@ -226,24 +240,28 @@ survFitPlotTKTDGenericNoOnePlotNoCi <- function(data, xlab, ylab) {
 }
 
 survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, ci, dataCI,
-                              dataCIm) {
+                              dataCIm, addlegend) {
 
   if (one.plot) {
     if (ci) warning("Credible intervals are only evalables in grid plot !")
-    survFitPlotTKTDGGOnePlot(data, xlab, ylab, main)
+    survFitPlotTKTDGGOnePlot(data, xlab, ylab, main, addlegend)
   } else {
     survFitPlotTKTDGGNoOnePlot(data, xlab, ylab, ci, dataCI, dataCIm)
   }
 }
 
-survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main) {
-  ggplot(data$dobs, aes(x = t, y = psurv, colour = factor(conc))) +
+survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main, addlegend) {
+  gf <- ggplot(data$dobs, aes(x = t, y = psurv, colour = factor(conc))) +
     geom_point() +
-    scale_color_discrete("Concentrations") +
     geom_line(data = data$dtheo) +
     labs(x = xlab, y = ylab) + ggtitle(main) +
     ylim(c(0, 1)) +
     theme_minimal()
+  if (addlegend) {
+    gf + scale_color_discrete("Concentrations")
+  } else {
+    gf + scale_color_discrete(guide = "none")
+  }
 }
 
 survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, ci, dataCI,
@@ -275,7 +293,7 @@ survFitPlotTKTDGGNoOnePlotNoCi <- function(data, xlab, ylab) {
   ggplot(data$dobs,
          aes(x = t, y = psurv, colour = factor(conc))) +
     geom_point() +
-    geom_line(data = data$dtheo, colour = "red") +
+    geom_line(data = data$dtheo) +
     facet_wrap(~conc) +
     labs(x = xlab, y = ylab) +
     ylim(c(0, 1)) +
