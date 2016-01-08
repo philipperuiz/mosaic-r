@@ -230,15 +230,18 @@ survFitPlotCITKTD <- function(x) {
   # quantile
   qinf95 = NULL
   qsup95 = NULL
+  q50 = NULL
   
   for (i in 1:dim(dtheof)[1]) {
     qinf95[i] <- quantile(dtheof[i, 3:length(dtheof)],
                           probs = 0.025, na.rm = TRUE)
     qsup95[i] <- quantile(dtheof[i, 3:length(dtheof)],
                           probs = 0.975, na.rm = TRUE)
+    q50[i] <- quantile(dtheof[i, 3:length(dtheof)],
+                       probs = 0.5, na.rm = TRUE)
   }
   
-  dtheof <- cbind(qinf95, qsup95, dtheof)
+  dtheof <- cbind(qinf95, qsup95, q50, dtheof)
   
   return(dtheof)
 }
@@ -341,6 +344,7 @@ survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, ci, dataCI,
 survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main, addlegend) {
   gf <- ggplot(data$dobs, aes(x = t, y = psurv, colour = factor(conc))) +
     geom_point() +
+    geom_line(data = dataCIm)
     geom_line(data = data$dtheo) +
     labs(x = xlab, y = ylab) + ggtitle(main) +
     ylim(c(0, 1)) +
@@ -367,6 +371,7 @@ survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
          aes(x = t, y = psurv, colour = factor(conc))) +
     geom_line(data = dataCIm, aes(x = time, y = value, group = variable),
               alpha = 0.05) +
+    geom_line(data = dataCI, aes(x = time, y = q50), linetype = 'dashed', color = "black") +
     geom_line(data = data$dtheo, color = "red") +
     geom_line(data = dataCI, aes(x = time, y = qinf95), linetype = 'dashed', color = "black") +
     geom_line(data = dataCI, aes(x = time, y = qsup95), linetype = 'dashed', color = "black") +
