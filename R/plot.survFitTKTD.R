@@ -365,14 +365,15 @@ survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
                                          dataCIm, conf.int) {
   ggplot(data$dobs,
          aes(x = t, y = psurv, colour = factor(conc))) +
-    geom_segment(aes(x = t, xend = t, y = qinf95, yend = qsup95),
-                 arrow = arrow(length = unit(0.25, "cm"), angle = 90,
-                               ends = "both"), data$obs, color = "black") +
     geom_line(data = dataCIm, aes(x = time, y = value, group = variable),
               alpha = 0.05) +
     geom_line(data = data$dtheo, color = "red") +
     geom_line(data = dataCI, aes(x = time, y = qinf95), linetype = 'dashed', color = "black") +
     geom_line(data = dataCI, aes(x = time, y = qsup95), linetype = 'dashed', color = "black") +
+    geom_point(color = "black") +
+    geom_segment(aes(x = t, xend = t, y = qinf95, yend = qsup95),
+                 arrow = arrow(length = unit(0.25, "cm"), angle = 90,
+                               ends = "both"), data$obs, color = "black") +
     facet_wrap(~conc) +
     labs(x = xlab, y = ylab) + ggtitle(main) +
     ylim(c(0, 1)) +
