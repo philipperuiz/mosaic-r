@@ -31,17 +31,18 @@ plot.survFitTKTD <- function(x,
   
   data <- survFitPlotDataTKTD(x)
   
+  conf.int <- if (ci) { survTKTDConfInt(x) } else NULL
   dataCI <- if (ci && !one.plot) { survFitPlotCITKTD(x) } else NULL
   dataCIm <- if (ci && !one.plot) { melt(dataCI,
                                          id.vars = c("conc", "time")) } else NULL
   
   if (style == "generic") {
     survFitPlotTKTDGeneric(data, xlab, ylab, main, one.plot, ci, dataCIm,
-                           addlegend)
+                           conf.int, addlegend)
   }
   else if (style == "ggplot") {
     survFitPlotTKTDGG(data, xlab, ylab, main, one.plot, ci, dataCI, dataCIm,
-                      addlegend)
+                      conf.int, addlegend)
   }
   else stop("Unknown style")
 }
@@ -154,6 +155,24 @@ survFitPlotDataTKTD <- function(x) {
               dobs = dobs))
 }
 
+#' @importFrom stats aggregate binom.test
+survTKTDConfInt <- function(x) {
+  # create confidente interval on observed data
+  # binomial model by a binomial test
+  # INPUT:
+  # - x : object of class survFitTT
+  # OUTPUT:
+  # - ci : confidente interval
+  
+  ci <- apply(x$transformed.data, 1, function(x) {
+    binom.test(x["N_alive"], x["N_init"])$conf.int
+  })
+  rownames(ci) <- c("qinf95", "qsup95")
+  colnames(ci) <- x$conc
+  
+  return(ci)
+}
+
 survFitPlotCITKTD <- function(x) {
   # INPUT
   # x : An object of class survFitTKTD
@@ -223,7 +242,7 @@ survFitPlotCITKTD <- function(x) {
 }
 
 survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot, ci, dataCIm,
-                                   addlegend) {
+                                   conf.int, addlegend) {
   # vector color
   data[["dobs"]]$color <- as.numeric(as.factor(data[["dobs"]][["conc"]]))
   data[["dtheo"]]$color <- as.numeric(as.factor(data[["dtheo"]][["conc"]]))
@@ -307,13 +326,13 @@ survFitPlotTKTDGenericNoOnePlotNoCi <- function(data, xlab, ylab) {
 }
 
 survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, ci, dataCI,
-                              dataCIm, addlegend) {
+                              dataCIm, conf.int, addlegend) {
 
   if (one.plot) {
     if (ci) warning("Credible intervals are only evalables in grid plot !")
     survFitPlotTKTDGGOnePlot(data, xlab, ylab, main, addlegend)
   } else {
-    survFitPlotTKTDGGNoOnePlot(data, xlab, ylab, main, ci, dataCI, dataCIm)
+    survFitPlotTKTDGGNoOnePlot(data, xlab, ylab, main, ci, dataCI, dataCIm, conf.int)
   }
 }
 
@@ -332,16 +351,16 @@ survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main, addlegend) {
 }
 
 survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, main, ci, dataCI,
-                                       dataCIm) {
+                                       dataCIm, conf.int) {
   if (ci) {
-    survFitPlotTKTDGGNoOnePlotCi(data, xlab, ylab, main, dataCI, dataCIm)
+    survFitPlotTKTDGGNoOnePlotCi(data, xlab, ylab, main, dataCI, dataCIm, conf.int)
   } else {
     survFitPlotTKTDGGNoOnePlotNoCi(data, xlab, ylab, main)
   }
 }
 
 survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
-                                         dataCIm) {
+                                         dataCIm, conf.int) {
   ggplot(data$dobs,
          aes(x = t, y = psurv, colour = factor(conc))) +
     geom_line(data = dataCIm, aes(x = time, y = value, group = variable),
