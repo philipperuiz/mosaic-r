@@ -32,22 +32,24 @@ plot.survFitTKTD <- function(x,
   data <- survFitPlotDataTKTD(x)
   
   conf.int <- if (ci) { survTKTDConfInt(x) } else NULL
+  if (ci) data$dobs <- cbind(data$dobs, qinf95 = conf.int["qinf95",],
+                             qsup95 = conf.int["qsup95",])
   dataCI <- if (ci && !one.plot) { survFitPlotCITKTD(x) } else NULL
   dataCIm <- if (ci && !one.plot) { melt(dataCI,
                                          id.vars = c("conc", "time")) } else NULL
   
   if (style == "generic") {
     survFitPlotTKTDGeneric(data, xlab, ylab, main, one.plot, ci, dataCIm,
-                           conf.int, addlegend)
+                           addlegend)
   }
   else if (style == "ggplot") {
     survFitPlotTKTDGG(data, xlab, ylab, main, one.plot, ci, dataCI, dataCIm,
-                      conf.int, addlegend)
+                      addlegend)
   }
   else stop("Unknown style")
 }
 
-Surv <- function (Cw, time, ks, ke, NEC, m0)
+Surv <- function(Cw, time, ks, ke, NEC, m0)
   # Fonction S ecrite en R pour la validation en simu ensuite
   # Cw est la concentration dans le milieu
 {
@@ -168,7 +170,7 @@ survTKTDConfInt <- function(x) {
     binom.test(x["N_alive"], x["N_init"])$conf.int
   })
   rownames(ci) <- c("qinf95", "qsup95")
-  colnames(ci) <- x$conc
+  colnames(ci) <- x$transformed.data$conc
   
   return(ci)
 }
@@ -242,7 +244,7 @@ survFitPlotCITKTD <- function(x) {
 }
 
 survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot, ci, dataCIm,
-                                   conf.int, addlegend) {
+                                   addlegend) {
   # vector color
   data[["dobs"]]$color <- as.numeric(as.factor(data[["dobs"]][["conc"]]))
   data[["dtheo"]]$color <- as.numeric(as.factor(data[["dtheo"]][["conc"]]))
@@ -326,7 +328,7 @@ survFitPlotTKTDGenericNoOnePlotNoCi <- function(data, xlab, ylab) {
 }
 
 survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, ci, dataCI,
-                              dataCIm, conf.int, addlegend) {
+                              dataCIm, addlegend) {
 
   if (one.plot) {
     if (ci) warning("Credible intervals are only evalables in grid plot !")
@@ -363,6 +365,9 @@ survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
                                          dataCIm, conf.int) {
   ggplot(data$dobs,
          aes(x = t, y = psurv, colour = factor(conc))) +
+    geom_segment(aes(x = t, xend = t, y = qinf95, yend = qsup95),
+                 arrow = arrow(length = unit(0.25, "cm"), angle = 90,
+                               ends = "both"), data$obs, color = "black") +
     geom_line(data = dataCIm, aes(x = time, y = value, group = variable),
               alpha = 0.05) +
     geom_line(data = data$dtheo, color = "red") +
