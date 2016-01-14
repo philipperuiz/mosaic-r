@@ -50,7 +50,7 @@ EvalsurvTKTDPpc <- function(x) {
 
   tot.mcmc <- do.call("rbind", x$mcmc)
 
-  ke <- sample(tot.mcmc[, "log10ke"], 5000)
+  ke <- 10^sample(tot.mcmc[, "log10ke"], 5000)
   ks <- 10^sample(tot.mcmc[, "log10ks"], 5000)
   nec <- 10^sample(tot.mcmc[, "log10NEC"], 5000)
   m0 <- 10^sample(tot.mcmc[, "log10m0"], 5000)
@@ -73,7 +73,7 @@ EvalsurvTKTDPpc <- function(x) {
     psurv <- exp(-m0 * (t[i] - tprec[i]) +
                    ifelse(t[i] > tNEC,
                           -ks * ((xconc[i] - nec) * (t[i] - tref) +
-                                   xconc[i]/ke * ( exp(-ke * t[i]) - exp(-ke * tref))), 0))
+                                   xconc[i]/ke * (exp(-ke * t[i]) - exp(-ke * tref))), 0))
     NsurvPred[, i] <- rbinom(5000, Nprec[i], psurv)
   }
 
