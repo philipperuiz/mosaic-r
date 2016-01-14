@@ -66,14 +66,19 @@ EvalsurvTKTDPpc <- function(x) {
   NsurvPred <- matrix(NA, nrow = 5000, ncol = n)
   
   for (i in 1:n) {
-    xcor <- ifelse(xconc[i] > 0, xconc[i], 10)
-    R <- ifelse(xconc[i] > nec, nec/xcor, 0.1)
-    tNEC <- ifelse(xconc[i] > nec, -1 / ke * log(1 - R), bigtime)
-    tref <- max(tprec[i], tNEC)
-    psurv <- exp(-m0 * (t[i] - tprec[i]) +
-                   ifelse(t[i] > tNEC,
-                          -ks * ((xconc[i] - nec) * (t[i] - tref) +
-                                   xconc[i]/ke * (exp(-ke * t[i]) - exp(-ke * tref))), 0))
+    for (j in 1:length(ke)) {
+      xcor <- ifelse(xconc[i] > 0, xconc[i], 10)
+      R <- ifelse(xconc[i] > nec[j], nec[j]/xcor, 0.1)
+      tNEC <- ifelse(xconc[i] > nec[j], -1 / ke[j] * log(1 - R), bigtime)
+      tref <- max(tprec[i], tNEC)
+      psurv <- exp(-m0 * (t[i] - tprec[i]) +
+                     if (t[i] > tNEC) {
+                       -ks * ((xconc[i] - nec[j]) * (t[i] - tref) +
+                                xconc[i]/ke[j] * (exp(-ke[j] * t[i]) - exp(-ke[j] * tref)))
+                     } else {
+                       0
+                     })
+    }
     NsurvPred[, i] <- rbinom(5000, Nprec[i], psurv)
   }
 
