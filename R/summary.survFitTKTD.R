@@ -38,12 +38,14 @@ summary.survFitTKTD <- function(object, quiet = FALSE, ...) {
   n.iter <- object$n.iter$end - object$n.iter$start
   
   if (object$distr == "norm") {
-    # ke
-    log10ke <- qnorm(p = c(0.5, 0.025, 0.975),
-                     mean = object$jags.data$meanlog10ke,
-                     sd = 1 / sqrt(object$jags.data$taulog10ke))
-    
-    ke <- 10^log10ke
+    if (object$ke) {
+      # ke
+      log10ke <- qnorm(p = c(0.5, 0.025, 0.975),
+                       mean = object$jags.data$meanlog10ke,
+                       sd = 1 / sqrt(object$jags.data$taulog10ke))
+      
+      ke <- 10^log10ke
+    }
     
     # ks
     log10ks <- qnorm(p = c(0.5, 0.025, 0.975),
@@ -59,20 +61,24 @@ summary.survFitTKTD <- function(object, quiet = FALSE, ...) {
     
     nec <- 10^log10nec
     
-    # m0
-    log10m0 <- qnorm(p = c(0.5, 0.025, 0.975),
-                     mean = object$jags.data$meanlog10m0,
-                     sd = 1 / sqrt(object$jags.data$taulog10m0))
-    
-    m0 <- 10^log10m0
+    if (object$m0) {
+      # m0
+      log10m0 <- qnorm(p = c(0.5, 0.025, 0.975),
+                       mean = object$jags.data$meanlog10m0,
+                       sd = 1 / sqrt(object$jags.data$taulog10m0))
+      
+      m0 <- 10^log10m0
+    }
     
   } else if (object$distr == "unif") {
-    # ke
-    log10ke <- qunif(p = c(0.5, 0.025, 0.975),
-                     min = object$jags.data$kemin,
-                     max = object$jags.data$kemax)
-    
-    ke <- 10^log10ke
+    if (object$ke) {
+      # ke
+      log10ke <- qunif(p = c(0.5, 0.025, 0.975),
+                       min = object$jags.data$kemin,
+                       max = object$jags.data$kemax)
+      
+      ke <- 10^log10ke
+    }
     
     # ks
     log10ks <- qunif(p = c(0.5, 0.025, 0.975),
@@ -88,15 +94,25 @@ summary.survFitTKTD <- function(object, quiet = FALSE, ...) {
     
     nec <- 10^log10nec
     
-    # m0
-    log10m0 <-qunif(p = c(0.5, 0.025, 0.975),
-                    min = object$jags.data$m0min,
-                    max = object$jags.data$m0max)
-    
-    m0 <- 10^log10m0
+    if (object$m0) {
+      # m0
+      log10m0 <- qunif(p = c(0.5, 0.025, 0.975),
+                       min = object$jags.data$m0min,
+                       max = object$jags.data$m0max)
+      
+      m0 <- 10^log10m0
+    }
   }
   
-  res <- rbind(ke, ks, nec, m0)
+  res <- if (ke && m0) {
+    rbind(ke, ks, nec, m0)
+  } else if (!ke && m0) {
+    rbind(ks, nec, m0)
+  } else if (ke && !m0) {
+    rbind(ke, ks, nec)
+  } else {
+    rbind(ks, m0)
+  }
   
   ans1 <- round(data.frame(res), digits = 3)
   colnames(ans1) <- c("50%", "2.5%", "97.5%")
