@@ -104,11 +104,11 @@ summary.survFitTKTD <- function(object, quiet = FALSE, ...) {
     }
   }
   
-  res <- if (ke && m0) {
+  res <- if (object$ke && object$m0) {
     rbind(ke, ks, nec, m0)
-  } else if (!ke && m0) {
+  } else if (!object$ke && object$m0) {
     rbind(ks, nec, m0)
-  } else if (ke && !m0) {
+  } else if (object$ke && !object$m0) {
     rbind(ke, ks, nec)
   } else {
     rbind(ks, m0)
