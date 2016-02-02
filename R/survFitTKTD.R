@@ -149,7 +149,7 @@ eps <- 0.00000001
 ##########Computation of the likelihood
 for (i in 1:ndat)
 {
-  psurv[i] <- 1 - (1 - exp(-ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (t[i] - tprec[i]) + (x[i] / ke) * (exp(-ke * t[i]) - exp(-ke * tprec[i]))))
+  psurv[i] <- exp(-ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (t[i] - tprec[i]) + (x[i] / ke) * (exp(-ke * t[i]) - exp(-ke * tprec[i])))
   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
 }
 }"
@@ -169,10 +169,9 @@ eps <- 0.00000001
 ##########Computation of the likelihood
 for (i in 1:ndat)
 {
-  psurv[i] <- 1 - (1 - exp(m0 * (-t[i] + 2 * tprec[i] - t2prec[i]) + ks * ((ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (tprec[i] - t[i]))))
+  psurv[i] <- exp(m0 * (tprec[i] - t[i]) + ks * ((ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (tprec[i] - t[i])))
   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
 }
-
 }"
 
 # model m0 = 0 ke = Inf new
@@ -190,7 +189,7 @@ eps <- 0.00000001
 for (i in 1:ndat)
 {
   
-  psurv[i] <- 1 - (1 - exp(ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (tprec[i] - t[i])))
+  psurv[i] <- exp(ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (tprec[i] - t[i]))
   
   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
 }
@@ -238,7 +237,7 @@ eps <- 0.00000001
 ##########Computation of the likelihood
 for (i in 1:ndat)
 {
-  psurv[i] <- 1 - (1 - exp(-ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (t[i] - tprec[i]) + (x[i] / ke) * (exp(-ke * t[i]) - exp(-ke * tprec[i]))))
+  psurv[i] <- exp(-ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (t[i] - tprec[i]) + (x[i] / ke) * (exp(-ke * t[i]) - exp(-ke * tprec[i])))
   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
 }
 }"
@@ -259,10 +258,9 @@ eps <- 0.00000001
 ##########Computation of the likelihood
 for (i in 1:ndat)
 {
-  psurv[i] <- 1 - (1 - exp(m0 * (-t[i] + 2 * tprec[i] - t2prec[i]) + ks * ((ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (tprec[i] - t[i]))))
+  psurv[i] <- exp(m0 * (tprec[i] - t[i]) + ks * ((ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (tprec[i] - t[i])))
   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
 }
-
 }"
 
 # model m0 = 0 ke = Inf new
@@ -280,7 +278,7 @@ eps <- 0.00000001
 for (i in 1:ndat)
 {
   
-  psurv[i] <- 1 - (1 - exp(ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (tprec[i] - t[i])))
+  psurv[i] <- exp(ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (tprec[i] - t[i]))
   
   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
 }
