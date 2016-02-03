@@ -81,7 +81,6 @@ survTKTDCreateJagsData <- function(data, distr = "norm", bond = "01",
   if (distr == "unif") {
     return(list( x = data$conc, y = data$N_alive,
                  t = data$time, tprec = data$tprec,
-                 t2prec = if (m0 && !ke) {data$t2prec} else NULL,
                  Nprec = data$Nprec,
                  minlog10conc = log10(concmin), maxlog10conc = log10(concmax),
                  minlog10ks = log10(ksmin), maxlog10ks = log10(ksmax),
@@ -94,7 +93,6 @@ survTKTDCreateJagsData <- function(data, distr = "norm", bond = "01",
   } else if (distr == "norm") {
     return(list( x = data$conc, y = data$N_alive,
                  t = data$time, tprec = data$tprec,
-                 t2prec = if (m0 && !ke) {data$t2prec} else NULL,
                  Nprec = data$Nprec,
                  meanlog10ks = meanlog10ks, taulog10ks = taulog10ks,
                  meanlog10ke = if (ke) {meanlog10ke} else NULL,
@@ -492,7 +490,6 @@ survFitTKTD <- function(data,
 
   n <- nrow(data)
   data$tprec <- NA
-  data$t2prec <- NA
   data$Nprec <- NA
   data$N_init <- NA
   for (i in 1:n)
@@ -502,9 +499,6 @@ survFitTKTD <- function(data,
       data$tprec[i] <- data$time[i - 1]
       data$Nprec[i] <- data$N_alive[i - 1]
       data$N_init[i] <- data$N_alive[data$conc == data$conc[i] & data$time == 0]
-    }
-    if (data$time[i] != 0 && data$time[i] != min(data$time[data$time != 0])) {
-      data$t2prec[i] <- data$tprec[i - 1]
     }
   }
   
