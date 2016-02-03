@@ -113,7 +113,7 @@ survFitPlotCITKTD <- function(x) {
   
   # prameters
   mctot <- do.call("rbind", x$mcmc)
-  sel <- sample(nrow(mctot))[1:ceiling(nrow(mctot) / 10)]
+  sel <- sample(nrow(mctot))[1:ceiling(nrow(mctot) / 50)]
   ks <- 10^mctot[, "log10ks"][sel]
   ke <- 10^mctot[, "log10ke"][sel]
   m0 <- 10^mctot[, "log10m0"][sel]
