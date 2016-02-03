@@ -56,8 +56,48 @@ Surv <- function (Cw, time, ks, ke, NEC, m0)
     if (time > tNEC) {
       # ajoute de la mortalite due au toxique
       S <- S * exp( ks/ke*Cw*(exp(-ke*tNEC) -exp(-ke*time))
-                          - ks*(Cw-NEC)*(time - tNEC) )
+                    - ks*(Cw-NEC)*(time - tNEC) )
     }
+  }
+  return(S)
+}
+
+Survm00 <- function (Cw, time, ks, ke, NEC)
+  # Fonction S ecrite en R pour la validation en simu ensuite
+  # Cw est la concentration dans le milieu
+{
+  S <- 1 # survie de base avec mortalite naturelle seule
+  if (Cw > NEC) {
+    tNEC <- -(1/ke)*log(1 - NEC/Cw)
+    if (time > tNEC) {
+      # ajoute de la mortalite due au toxique
+      S <- S * exp( ks/ke*Cw*(exp(-ke*tNEC) -exp(-ke*time))
+                    - ks*(Cw-NEC)*(time - tNEC) )
+    }
+  }
+  return(S)
+}
+
+SurvkeInf <- function (Cw, time, ks, NEC, m0)
+  # Fonction S ecrite en R pour la validation en simu ensuite
+  # Cw est la concentration dans le milieu
+{
+  S <- exp(-m0*time) # survie de base avec mortalite naturelle seule
+  if (Cw > NEC) {
+    # ajoute de la mortalite due au toxique
+    S <- S * exp(- ks*(Cw-NEC)*(time) )
+  }
+  return(S)
+}
+
+SurvkeInfm00 <- function (Cw, time, ks, NEC)
+  # Fonction S ecrite en R pour la validation en simu ensuite
+  # Cw est la concentration dans le milieu
+{
+  S <- 1 # survie de base avec mortalite naturelle seule
+  if (Cw > NEC) {
+    # ajoute de la mortalite due au toxique
+    S <- S * exp(- ks*(Cw-NEC)*(time ) )
   }
   return(S)
 }
@@ -76,16 +116,30 @@ survFitPlotDataTKTD <- function(x) {
   
   # parameters
   ks <- x$estim.par["ks", "median"]
-  ke <- x$estim.par["ke", "median"]
+  if (x$ke) ke <- x$estim.par["ke", "median"]
   nec <- x$estim.par["nec", "median"]
-  m0 <- x$estim.par["m0", "median"]
+  if (x$m0) m0 <- x$estim.par["m0", "median"]
   
   for (i in 1:length(concobs)) {
     for (j in 1:npoints) {
-      psurv <- Surv(Cw = concobs[i], time = tfin[j],
-                    ks = ks, ke = ke,
-                    NEC = nec,
-                    m0 = m0)
+      if (x$ke && x$m0) {
+        psurv <- Surv(Cw = concobs[i], time = tfin[j],
+                      ks = ks, ke = ke,
+                      NEC = nec,
+                      m0 = m0)
+      } else if (x$ke && !x$m0) {
+        psurv <- Survm00(Cw = concobs[i], time = tfin[j],
+                         ks = ks, ke = ke,
+                         NEC = nec)
+      } else if (!x$ke && x$m0) {
+        psurv <- SurvkeInf(Cw = concobs[i], time = tfin[j],
+                           ks = ks, NEC = nec,
+                           m0 = m0)
+      } else {
+        psurv <- SurvkeInfm00(Cw = concobs[i], time = tfin[j],
+                              ks = ks, NEC = nec)
+      }
+      
       dtheo <- rbind(dtheo, data.frame(conc = concobs[i],
                                        t = tfin[j],
                                        psurv = psurv))
@@ -115,8 +169,8 @@ survFitPlotCITKTD <- function(x) {
   mctot <- do.call("rbind", x$mcmc)
   sel <- sample(nrow(mctot))[1:ceiling(nrow(mctot) / 50)]
   ks <- 10^mctot[, "log10ks"][sel]
-  ke <- 10^mctot[, "log10ke"][sel]
-  m0 <- 10^mctot[, "log10m0"][sel]
+  if (x$ke) ke <- 10^mctot[, "log10ke"][sel]
+  if (x$m0) m0 <- 10^mctot[, "log10m0"][sel]
   nec <- 10^mctot[, "log10NEC"][sel]
   
   # all theorical
@@ -125,10 +179,23 @@ survFitPlotCITKTD <- function(x) {
     dtheo[[k]] <- array(data = NA, dim = c(npoints, length(nec)))
     for (i in 1:length(nec)) {
       for (j in 1:npoints) {
-        dtheo[[k]][j, i] <- Surv(Cw = concobs[k], time = tfin[j],
-                                ks = ks[i], ke = ke[i],
-                                NEC = nec[i],
-                                m0 = m0[i])
+        if (x$ke && x$m0) {
+          dtheo[[k]][j, i] <- Surv(Cw = concobs[k], time = tfin[j],
+                                   ks = ks[i], ke = ke[i],
+                                   NEC = nec[i],
+                                   m0 = m0[i])
+        } else if (x$ke && !x$m0) {
+          dtheo[[k]][j, i] <- Survm00(Cw = concobs[k], time = tfin[j],
+                                      ks = ks[i], ke = ke[i],
+                                      NEC = nec[i])
+        } else if (!x$ke && x$m0) {
+          dtheo[[k]][j, i] <- SurvkeInf(Cw = concobs[k], time = tfin[j],
+                                        ks = ks[i], NEC = nec[i],
+                                        m0 = m0[i])
+        } else {
+          dtheo[[k]][j, i] <- SurvkeInfm00(Cw = concobs[k], time = tfin[j],
+                                           ks = ks[i], NEC = nec[i])
+        }
       }
     }
   }
