@@ -246,7 +246,7 @@ survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, ci, dataCI,
     if (ci) warning("Credible intervals are only evalables in grid plot !")
     survFitPlotTKTDGGOnePlot(data, xlab, ylab, main, addlegend)
   } else {
-    survFitPlotTKTDGGNoOnePlot(data, xlab, ylab, ci, dataCI, dataCIm)
+    survFitPlotTKTDGGNoOnePlot(data, xlab, ylab, main, ci, dataCI, dataCIm)
   }
 }
 
@@ -264,16 +264,16 @@ survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main, addlegend) {
   }
 }
 
-survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, ci, dataCI,
+survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, main, ci, dataCI,
                                        dataCIm) {
   if (ci) {
-    survFitPlotTKTDGGNoOnePlotCi(data, xlab, ylab, dataCI, dataCIm)
+    survFitPlotTKTDGGNoOnePlotCi(data, xlab, ylab, main, dataCI, dataCIm)
   } else {
-    survFitPlotTKTDGGNoOnePlotNoCi(data, xlab, ylab)
+    survFitPlotTKTDGGNoOnePlotNoCi(data, xlab, ylab, main)
   }
 }
 
-survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, dataCI,
+survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
                                          dataCIm) {
   ggplot(data$dobs,
          aes(x = t, y = psurv, colour = factor(conc))) +
@@ -283,19 +283,19 @@ survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, dataCI,
     geom_line(data = dataCI, aes(x = time, y = qinf95), linetype = 'dashed', color = "black") +
     geom_line(data = dataCI, aes(x = time, y = qsup95), linetype = 'dashed', color = "black") +
     facet_wrap(~conc) +
-    labs(x = xlab, y = ylab) +
+    labs(x = xlab, y = ylab) + ggtitle(main) +
     ylim(c(0, 1)) +
     theme_minimal() +
     scale_color_discrete(guide = "none")
 }
 
-survFitPlotTKTDGGNoOnePlotNoCi <- function(data, xlab, ylab) {
+survFitPlotTKTDGGNoOnePlotNoCi <- function(data, xlab, ylab, main) {
   ggplot(data$dobs,
          aes(x = t, y = psurv, colour = factor(conc))) +
     geom_point() +
     geom_line(data = data$dtheo) +
     facet_wrap(~conc) +
-    labs(x = xlab, y = ylab) +
+    labs(x = xlab, y = ylab) + ggtitle(main) +
     ylim(c(0, 1)) +
     theme_minimal() +
     scale_color_discrete(guide = "none")
