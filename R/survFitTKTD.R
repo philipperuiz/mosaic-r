@@ -132,25 +132,25 @@ for (i in 1:ndat)
 }
 }"
 
-modelTKTDUnifm00 <- "model {
-#########priors 
-log10ks ~ dunif(minlog10ks, maxlog10ks)
-log10NEC ~ dunif(minlog10conc, maxlog10conc)
-log10ke ~ dunif(minlog10ke, maxlog10ke)
-
-#####parameter transformation
-ks <- 10**log10ks
-NEC <- 10**log10NEC
-ke <- 10**log10ke
-eps <- 0.00000001
-
-##########Computation of the likelihood
-for (i in 1:ndat)
-{
-  psurv[i] <- exp(-ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (t[i] - tprec[i]) + (x[i] / ke) * (exp(-ke * t[i]) - exp(-ke * tprec[i])))
-  y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
-}
-}"
+# modelTKTDUnifm00 <- "model {
+# #########priors 
+# log10ks ~ dunif(minlog10ks, maxlog10ks)
+# log10NEC ~ dunif(minlog10conc, maxlog10conc)
+# log10ke ~ dunif(minlog10ke, maxlog10ke)
+# 
+# #####parameter transformation
+# ks <- 10**log10ks
+# NEC <- 10**log10NEC
+# ke <- 10**log10ke
+# eps <- 0.00000001
+# 
+# ##########Computation of the likelihood
+# for (i in 1:ndat)
+# {
+#   psurv[i] <- exp(-ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (t[i] - tprec[i]) + (x[i] / ke) * (exp(-ke * t[i]) - exp(-ke * tprec[i])))
+#   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
+# }
+# }"
 
 modelTKTDUnifm00v2 <- "model {
 #########priors 
@@ -172,7 +172,7 @@ for (i in 1:ndat)
   xcor[i] <- ifelse(x[i] > 0, x[i], 10)
   tref[i] <- max(tprec[i], tNEC[i])
   
-  psurv[i] <- exp(ifelse(t[i] > tNEC[i], -ks * ((x[i] - NEC) * (t[i] - tref[i]) + x[i]/ke * ( exp(-ke * t[i]) - exp(-ke * tref[i]))), eps))
+  psurv[i] <- exp(-eps + ifelse(t[i] > tNEC[i], -ks * ((x[i] - NEC) * (t[i] - tref[i]) + x[i]/ke * ( exp(-ke * t[i]) - exp(-ke * tref[i]))), 0))
   
   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
 }
@@ -246,25 +246,25 @@ for (i in 1:ndat)
 }
 }"
 
-modelTKTDNormm00 <- "model {
-#########priors 
-log10ks ~ dnorm(meanlog10ks, taulog10ks)
-log10NEC ~ dnorm(meanlog10nec, taulog10nec)
-log10ke ~ dnorm(meanlog10ke, taulog10ke)
-
-#####parameter transformation
-ks <- 10**log10ks
-NEC <- 10**log10NEC
-ke <- 10**log10ke
-eps <- 0.00000001
-
-##########Computation of the likelihood
-for (i in 1:ndat)
-{
-  psurv[i] <- exp(-ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (t[i] - tprec[i]) + (x[i] / ke) * (exp(-ke * t[i]) - exp(-ke * tprec[i])))
-  y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
-}
-}"
+# modelTKTDNormm00 <- "model {
+# #########priors 
+# log10ks ~ dnorm(meanlog10ks, taulog10ks)
+# log10NEC ~ dnorm(meanlog10nec, taulog10nec)
+# log10ke ~ dnorm(meanlog10ke, taulog10ke)
+# 
+# #####parameter transformation
+# ks <- 10**log10ks
+# NEC <- 10**log10NEC
+# ke <- 10**log10ke
+# eps <- 0.00000001
+# 
+# ##########Computation of the likelihood
+# for (i in 1:ndat)
+# {
+#   psurv[i] <- exp(-ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (t[i] - tprec[i]) + (x[i] / ke) * (exp(-ke * t[i]) - exp(-ke * tprec[i])))
+#   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
+# }
+# }"
 
 modelTKTDNormm00v2 <- "model {
 #########priors 
@@ -286,7 +286,7 @@ for (i in 1:ndat)
   xcor[i] <- ifelse(x[i] > 0, x[i], 10)
   tref[i] <- max(tprec[i], tNEC[i])
   
-  psurv[i] <- exp(ifelse(t[i] > tNEC[i], -ks * ((x[i] - NEC) * (t[i] - tref[i]) + x[i]/ke * ( exp(-ke * t[i]) - exp(-ke * tref[i]))), eps))
+  psurv[i] <- exp(-eps + ifelse(t[i] > tNEC[i], -ks * ((x[i] - NEC) * (t[i] - tref[i]) + x[i]/ke * ( exp(-ke * t[i]) - exp(-ke * tref[i]))), 0))
   
   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
 }
