@@ -378,7 +378,7 @@ survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
     geom_point(color = "black") +
     geom_segment(aes(x = t, xend = t, y = qinf95, yend = qsup95),
                  arrow = arrow(length = unit(0.25, "cm"), angle = 90,
-                               ends = "both"), data$obs, color = "black") +
+                               ends = "both"), data$obs, color = "gray") +
     facet_wrap(~conc) +
     labs(x = xlab, y = ylab) + ggtitle(main) +
     ylim(c(0, 1)) +
