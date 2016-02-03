@@ -90,7 +90,7 @@ survTKTDCreateJagsData <- function(data, distr = "norm", bond = "01",
                  minlog10m0 = if (m0) {log10(m0min)} else NULL,
                  maxlog10m0 = if (m0) {log10(m0max)} else NULL,
                  ndat = length(data$conc),
-                 bigtime = max(data$time) + 10))
+                 bigtime = if (ke) {max(data$time) + 10} else NULL))
   } else if (distr == "norm") {
     return(list( x = data$conc, y = data$N_alive,
                  t = data$time, tprec = data$tprec,
@@ -103,7 +103,7 @@ survTKTDCreateJagsData <- function(data, distr = "norm", bond = "01",
                  taulog10m0 = if (m0) {taulog10m0} else NULL,
                  meanlog10nec = meanlog10nec, taulog10nec = taulog10nec,
                  ndat = length(data$conc),
-                 bigtime = if (ke && m0) {max(data$time) + 10} else NULL))
+                 bigtime = if (ke) {max(data$time) + 10} else NULL))
   }
 }
  
@@ -150,6 +150,32 @@ eps <- 0.00000001
 for (i in 1:ndat)
 {
   psurv[i] <- exp(-ks * (ifelse((x[i] - NEC) >= 0, x[i] - NEC, 0) + eps) * (t[i] - tprec[i]) + (x[i] / ke) * (exp(-ke * t[i]) - exp(-ke * tprec[i])))
+  y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
+}
+}"
+
+modelTKTDUnifm00v2 <- "model {
+#########priors 
+log10ks ~ dunif(minlog10ks, maxlog10ks)
+log10NEC ~ dunif(minlog10conc, maxlog10conc)
+log10ke ~ dunif(minlog10ke, maxlog10ke)
+
+#####parameter transformation
+ks <- 10**log10ks
+NEC <- 10**log10NEC
+ke <- 10**log10ke
+eps <- 0.00000001
+
+##########Computation of the likelihood
+for (i in 1:ndat)
+{
+  tNEC[i] <- ifelse(x[i] > NEC, -1 / ke * log(1 - R[i]), bigtime)
+  R[i] <- ifelse(x[i] > NEC, NEC/xcor[i], 0.1)
+  xcor[i] <- ifelse(x[i] > 0, x[i], 10)
+  tref[i] <- max(tprec[i], tNEC[i])
+  
+  psurv[i] <- exp(ifelse(t[i] > tNEC[i], -ks * ((x[i] - NEC) * (t[i] - tref[i]) + x[i]/ke * ( exp(-ke * t[i]) - exp(-ke * tref[i]))), eps))
+  
   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
 }
 }"
@@ -241,6 +267,33 @@ for (i in 1:ndat)
   y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
 }
 }"
+
+modelTKTDNormm00v2 <- "model {
+#########priors 
+log10ks ~ dnorm(meanlog10ks, taulog10ks)
+log10NEC ~ dnorm(meanlog10nec, taulog10nec)
+log10ke ~ dnorm(meanlog10ke, taulog10ke)
+
+#####parameter transformation
+ks <- 10**log10ks
+NEC <- 10**log10NEC
+ke <- 10**log10ke
+eps <- 0.00000001
+
+##########Computation of the likelihood
+for (i in 1:ndat)
+{
+  tNEC[i] <- ifelse(x[i] > NEC, -1/ke * log( 1- R[i]), bigtime)
+  R[i] <- ifelse(x[i] > NEC, NEC/xcor[i], 0.1)
+  xcor[i] <- ifelse(x[i] > 0, x[i], 10)
+  tref[i] <- max(tprec[i], tNEC[i])
+  
+  psurv[i] <- exp(ifelse(t[i] > tNEC[i], -ks * ((x[i] - NEC) * (t[i] - tref[i]) + x[i]/ke * ( exp(-ke * t[i]) - exp(-ke * tref[i]))), eps))
+  
+  y[i] ~ dbin(psurv[i], ifelse(Nprec[i] > 0, Nprec[i], 1))
+}
+}"
+
 
 # model ke = Inf
 modelTKTDNormkeInf <- "model {
@@ -461,8 +514,7 @@ survFitTKTD <- function(data,
   datasurv0$N_alive <- datasurv0$N_init
   data[is.na(data$tprec),
        c("tprec", "Nprec", "N_init")] <- datasurv0[, c("tprec", "Nprec", "N_init")]
-  data[is.na(data$t2prec), "t2prec"] <- 0
-  
+
   jags.data <- survTKTDCreateJagsData(data, distr, bond, m0, ke)
   jags.data <- jags.data[!sapply(jags.data, is.null)]
 
@@ -473,7 +525,7 @@ survFitTKTD <- function(data,
                              data = jags.data, n.chains,
                              Nadapt = 3000, quiet)
     } else if (!m0 && ke) {
-      model <- survLoadModel(model.program = modelTKTDNormm00,
+      model <- survLoadModel(model.program = modelTKTDNormm00v2,
                              data = jags.data, n.chains,
                              Nadapt = 3000, quiet)
     } else if (m0 && !ke) {
@@ -491,7 +543,7 @@ survFitTKTD <- function(data,
                              data = jags.data, n.chains,
                              Nadapt = 3000, quiet)
     } else if (!m0 && ke) {
-      model <- survLoadModel(model.program = modelTKTDUnifm00,
+      model <- survLoadModel(model.program = modelTKTDUnifm00v2,
                              data = jags.data, n.chains,
                              Nadapt = 3000, quiet)
     } else if (m0 && !ke) {
@@ -519,6 +571,8 @@ survFitTKTD <- function(data,
   sampling.parameters <- modelSamplingParameters(model,
                                                  parameters, n.chains, quiet)
   
+  tktd.dic <- calcDIC(model, sampling.parameters, quiet)
+  
   # Sampling
   prog.b <- ifelse(quiet == TRUE, "none", "text")
   
@@ -533,6 +587,7 @@ survFitTKTD <- function(data,
   
   #OUTPUT
   OUT <- list(estim.par = estim.par,
+              DIC = tktd.dic,
               mcmc = mcmc,
               model = model,
               ke = ke,
