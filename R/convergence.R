@@ -119,12 +119,18 @@ convergence <- function(out,
       blank <- grid.rect(gp = gpar(col = "white"))
     }
     
-    
-    
-    do.call(grid.arrange, list(if (trace == TRUE) trp else blank,
-                               if (density == TRUE) dns else blank,
-                               if (autocorr == TRUE) atc else blank,
-                               ncol = 2))
+    lGrid <- sum(c(trace, density, autocorr))
+
+    if (2 <= lGrid && lGrid <= 3) {
+      do.call(grid.arrange, list(if (trace == TRUE) trp else blank,
+                                 if (density == TRUE) dns else blank,
+                                 if (autocorr == TRUE) atc else blank,
+                                 ncol = 2))
+    } else {
+      if (trace == TRUE) print(trp)
+      if (density == TRUE) print(dns)
+      if (autocorr == TRUE) print(atc)
+    }
   }
   
   return(invisible(list(mpsrf = GelRubmulti,
