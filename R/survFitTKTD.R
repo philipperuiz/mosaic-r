@@ -258,6 +258,29 @@ survFitTKTD <- function(data,
   # calculate from the estimated parameters
   estim.par <- survTKTDPARAMS(mcmc)
   
+  # check the posterior range
+  # ks
+  Priorminks <- jags.data$meanlog10ks - 2 * (1 / jags.data$taulog10ks)
+  Priormaxks <- jags.data$meanlog10ks + 2 * (1 / jags.data$taulog10ks)
+  # ke
+  Priorminke <- jags.data$meanlog10ke - 2 * (1 / jags.data$taulog10ke)
+  Priormaxke <- jags.data$meanlog10ke + 2 * (1 / jags.data$taulog10ke)
+  # m0
+  Priorminm0 <- jags.data$meanlog10m0 - 2 * (1 / jags.data$taulog10m0)
+  Priormaxm0 <- jags.data$meanlog10m0 + 2 * (1 / jags.data$taulog10m0)
+  # nec
+  Priorminnec <- jags.data$meanlog10nec - 2 * (1 / jags.data$taulog10nec)
+  Priormaxnec <- jags.data$meanlog10nec + 2 * (1 / jags.data$taulog10nec)
+  
+  if (estim.par["ks", "Q2.5"] < Priorminks || estim.par["ks", "Q97.5"] > Priormaxks)
+    warning("ks posterior is out of ks prior")
+  if (estim.par["ke", "Q2.5"] < Priorminke || estim.par["ke", "Q97.5"] > Priormaxke)
+    warning("ke posterior is out of ke prior")
+  if (estim.par["m0", "Q2.5"] < Priorminm0 || estim.par["m0", "Q97.5"] > Priormaxm0)
+    warning("m0 posterior is out of m0 prior")
+  if (estim.par["nec", "Q2.5"] < Priorminnec || estim.par["nec", "Q97.5"] > Priormaxnec)
+    warning("nec posterior is out of nec prior")
+    
   #OUTPUT
   OUT <- list(estim.par = estim.par,
               mcmc = mcmc,
