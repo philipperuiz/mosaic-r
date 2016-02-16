@@ -203,7 +203,6 @@ exclude_labels <- function(x) {
   return(x)
 }
 
-
 stepCalc <- function(obs_val) {
   # calculation of steps coordinate
   sObs <- sort(obs_val)
@@ -229,3 +228,21 @@ jitterObsGenerator <- function(stepX, tab, obs_val) {
   return(list(spaceX = spaceX,
               jitterObs = unlist(jitterObs)))
 }
+
+# [plotMatrixGeometry(n)] returns a vector [c(w,h)] such that a matrix of plots
+# of dimension ([w], [h]) is big enough to display [n] plots in a pretty way.
+# This will typically be used in [par(mfrow)] calls.
+plotMatrixGeometry <- function(nblevels) {
+  PlotPar <- c(c(2, 2), c(2, 3), c(2, 4), c(3, 3), c(2, 5), c(3, 4), c(3, 5),
+               c(4, 4))
+  NbPlotTheo <- matrix(ncol = 2, nrow = 8)
+  NbPlotTheo[, 1] <- c(1, 3, 5, 7, 9, 11, 13, 15)
+  NbPlotTheo[, 2] <- c(4, 6, 8, 9, 10, 12, 15, 16)
+  if (nblevels < 15) {
+    i <- NbPlotTheo[NbPlotTheo[, 2] - nblevels > 0, 1][1]
+  } else {
+    i <- 15
+  }
+  return(c(PlotPar[i], PlotPar[i + 1]))
+}
+

@@ -1,7 +1,7 @@
 #' Posterior predictive check plot
 #' 
-#' Plot posterior predictive check for \code{reproFitTT} and \code{survFitTT}
-#' objects.
+#' Plot posterior predictive check for \code{reproFitTT}, \code{survFitTT} and
+#' \code{survFitTKTD} objects.
 #' 
 #' @param x an object used to select a method
 #' @param \dots Further arguments to be passed to generic methods
