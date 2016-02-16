@@ -1,9 +1,9 @@
 #' @importFrom dplyr filter
-survTKTDCreateJagsData <- function(data) {
+survTKTDCreateJagsData <- function(data, comp) {
   # Creates the parameters to define the prior of the TKTD model
   # INPUTS
   # data : object of class survData
-  # concentration
+  # comp : if true return only min and max of prior
   # OUTPUT
   # jags.data : list of data required for the jags.model function
   
@@ -26,13 +26,12 @@ survTKTDCreateJagsData <- function(data) {
   # ks parameters
   ksmax <- -log(0.001) / (tmin * deltaCmin)
   ksmin <- -log(0.999) / (tmax * (concmax - concmin))
-
+  
   meanlog10ks <- (log10(ksmax) + log10(ksmin)) / 2
   sdlog10ks <- (log10(ksmax) - log10(ksmin)) / 4
   taulog10ks <- 1 / sdlog10ks^2
   
   # ke parameters
-  
   kemax <- -log(0.001) / tmin
   kemin <- -log(0.999) / tmax
   
@@ -43,9 +42,7 @@ survTKTDCreateJagsData <- function(data) {
   
   # m0 parameters
   m0max <- -log(0.5) / tmin
-  
   m0min <- -log(0.999) / tmax
-  
   
   meanlog10m0 <- (log10(m0max) + log10(m0min)) / 2
   sdlog10m0 <- (log10(m0max) - log10(m0min)) / 4
@@ -55,7 +52,8 @@ survTKTDCreateJagsData <- function(data) {
   meanlog10nec <- (log10(concmax) + log10(concmin))/2
   sdlog10nec <- (log10(concmax) - log10(concmin)) / 4 
   taulog10nec <- 1/ sdlog10nec^2
-
+  
+  if (!comp) {
     return(list( x = data$conc, y = data$N_alive,
                  t = data$time, tprec = data$tprec,
                  Nprec = data$Nprec,
@@ -67,6 +65,16 @@ survTKTDCreateJagsData <- function(data) {
                  meanlog10nec = meanlog10nec, taulog10nec = taulog10nec,
                  ndat = length(data$conc),
                  bigtime = max(data$time) + 10))
+  } else {
+    return(list(log10necmin = log10(concmin),
+                log10necmax = log10(concmax),
+                log10ksmin = log10(ksmin),
+                log10ksmax = log10(ksmax),
+                log10kemin = log10(kemin),
+                log10kemax = log10(kemax),
+                log10m0min = log10(m0min),
+                log10m0max = log10(m0max)))
+  }
 }
 
 modelTKTDNorm <- "model {
@@ -112,7 +120,7 @@ survTKTDPARAMS <- function(mcmc) {
   ke <- 10^res.M$quantiles["log10ke", "50%"]
   keinf <- 10^res.M$quantiles["log10ke", "2.5%"]
   kesup <- 10^res.M$quantiles["log10ke", "97.5%"]
-
+  
   ks <- 10^res.M$quantiles["log10ks", "50%"]
   ksinf <- 10^res.M$quantiles["log10ks", "2.5%"]
   kssup <- 10^res.M$quantiles["log10ks", "97.5%"]
@@ -207,10 +215,10 @@ survFitTKTD <- function(data,
   # test class object
   if(!is(data, "survData"))
     stop("survFitTKTD: object of class survData expected")
-
+  
   # data transformation
   data <- summarise(group_by(data, conc, time), N_alive = sum(Nsurv))
-
+  
   n <- nrow(data)
   data$tprec <- NA
   data$Nprec <- NA
@@ -231,18 +239,18 @@ survFitTKTD <- function(data,
   datasurv0$N_alive <- datasurv0$N_init
   data[is.na(data$tprec),
        c("tprec", "Nprec", "N_init")] <- datasurv0[, c("tprec", "Nprec", "N_init")]
-
-  jags.data <- survTKTDCreateJagsData(data)
-
+  
+  jags.data <- survTKTDCreateJagsData(data, FALSE)
+  
   # Define model
-
-      model <- survLoadModel(model.program = modelTKTDNorm,
-                             data = jags.data, n.chains,
-                             Nadapt = 3000, quiet)
-
+  
+  model <- survLoadModel(model.program = modelTKTDNorm,
+                         data = jags.data, n.chains,
+                         Nadapt = 3000, quiet)
+  
   # Determine sampling parameters
   parameters <- c("log10ke", "log10NEC","log10ks", "log10m0")
-
+  
   sampling.parameters <- modelSamplingParameters(model,
                                                  parameters, n.chains, quiet)
   
@@ -259,28 +267,24 @@ survFitTKTD <- function(data,
   estim.par <- survTKTDPARAMS(mcmc)
   
   # check the posterior range
-  # ks
-  Priorminks <- jags.data$meanlog10ks - 2 * (1 / jags.data$taulog10ks)
-  Priormaxks <- jags.data$meanlog10ks + 2 * (1 / jags.data$taulog10ks)
-  # ke
-  Priorminke <- jags.data$meanlog10ke - 2 * (1 / jags.data$taulog10ke)
-  Priormaxke <- jags.data$meanlog10ke + 2 * (1 / jags.data$taulog10ke)
-  # m0
-  Priorminm0 <- jags.data$meanlog10m0 - 2 * (1 / jags.data$taulog10m0)
-  Priormaxm0 <- jags.data$meanlog10m0 + 2 * (1 / jags.data$taulog10m0)
-  # nec
-  Priorminnec <- jags.data$meanlog10nec - 2 * (1 / jags.data$taulog10nec)
-  Priormaxnec <- jags.data$meanlog10nec + 2 * (1 / jags.data$taulog10nec)
+  priorBonds <- survTKTDCreateJagsData(data, TRUE)
   
-  if (estim.par["ks", "Q2.5"] < Priorminks || estim.par["ks", "Q97.5"] > Priormaxks)
+  if (log10(estim.par["ks", "Q2.5"]) < priorBonds$log10ksmin ||
+      log10(estim.par["ks", "Q97.5"]) > priorBonds$log10ksmax)
     warning("ks posterior is out of ks prior")
-  if (estim.par["ke", "Q2.5"] < Priorminke || estim.par["ke", "Q97.5"] > Priormaxke)
+  
+  if (log10(estim.par["ke", "Q2.5"]) < priorBonds$log10kemin ||
+      log10(estim.par["ke", "Q97.5"]) > priorBonds$log10kemax)
     warning("ke posterior is out of ke prior")
-  if (estim.par["m0", "Q2.5"] < Priorminm0 || estim.par["m0", "Q97.5"] > Priormaxm0)
+  
+  if (log10(estim.par["m0", "Q2.5"]) < priorBonds$log10m0min ||
+      log10(estim.par["m0", "Q97.5"]) > priorBonds$log10m0max)
     warning("m0 posterior is out of m0 prior")
-  if (estim.par["nec", "Q2.5"] < Priorminnec || estim.par["nec", "Q97.5"] > Priormaxnec)
+  
+  if (log10(estim.par["nec", "Q2.5"]) < priorBonds$log10necmin ||
+      log10(estim.par["nec", "Q97.5"]) > priorBonds$log10necmax)
     warning("nec posterior is out of nec prior")
-    
+  
   #OUTPUT
   OUT <- list(estim.par = estim.par,
               mcmc = mcmc,
