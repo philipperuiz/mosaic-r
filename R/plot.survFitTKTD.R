@@ -27,27 +27,28 @@ plot.survFitTKTD <- function(x,
                              xlab = "Time",
                              ylab = "Survival rate",
                              main = NULL,
-                             ci = FALSE,
                              one.plot = TRUE,
+                             adddata = FALSE,
                              addlegend = FALSE,
                              style = "generic", ...) {
   
   data <- survFitPlotDataTKTD(x)
   
-  conf.int <- if (ci) { survTKTDConfInt(x) } else NULL
-  if (ci) data$dobs <- cbind(data$dobs, qinf95 = conf.int["qinf95",],
-                             qsup95 = conf.int["qsup95",])
-  dataCI <- if (ci && !one.plot) { survFitPlotCITKTD(x) } else NULL
-  dataCIm <- if (ci && !one.plot) { melt(dataCI,
-                                         id.vars = c("conc", "time")) } else NULL
+  conf.int <- if (adddata && !one.plot) { survTKTDConfInt(x) } else NULL
+  if (adddata && !one.plot) data$dobs <- cbind(data$dobs,
+                                               qinf95 = conf.int["qinf95",],
+                                               qsup95 = conf.int["qsup95",])
+  dataCI <- if (!one.plot) { survFitPlotCITKTD(x) } else NULL
+  dataCIm <- if (!one.plot) { melt(dataCI,
+                                   id.vars = c("conc", "time")) } else NULL
   
   if (style == "generic") {
-    survFitPlotTKTDGeneric(data, xlab, ylab, main, one.plot, ci, dataCIm,
-                           addlegend)
+    survFitPlotTKTDGeneric(data, xlab, ylab, main, one.plot, dataCIm,
+                           adddata, addlegend)
   }
   else if (style == "ggplot") {
-    survFitPlotTKTDGG(data, xlab, ylab, main, one.plot, ci, dataCI, dataCIm,
-                      addlegend)
+    survFitPlotTKTDGG(data, xlab, ylab, main, one.plot, dataCI, dataCIm,
+                      adddata, addlegend)
   }
   else stop("Unknown style")
 }
@@ -183,41 +184,50 @@ survFitPlotCITKTD <- function(x) {
   return(dtheof)
 }
 
-survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot, ci, dataCIm,
-                                   addlegend) {
+survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot, dataCIm,
+                                   adddata, addlegend) {
   # vector color
   data[["dobs"]]$color <- as.numeric(as.factor(data[["dobs"]][["conc"]]))
   data[["dtheo"]]$color <- as.numeric(as.factor(data[["dtheo"]][["conc"]]))
   
   if (one.plot) {
-    survFitPlotTKTDGenericOnePlot(data, xlab, ylab, main, addlegend)
+    survFitPlotTKTDGenericOnePlot(data, xlab, ylab, main, adddata, addlegend)
   } else {
     par(mfrow = plotMatrixGeometry(length(unique(data[["dobs"]][["conc"]]))))
     
-    survFitPlotTKTDGenericNoOnePlot(data, xlab, ylab, ci, dataCIm)
+    survFitPlotTKTDGenericNoOnePlot(data, xlab, ylab, dataCIm, adddata)
     
     par(mfrow = c(1, 1))
   }
 }
 
-survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main, addlegend) {
+survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main, adddata,
+                                          addlegend) {
   plot(data[["dobs"]][["t"]],
        data[["dobs"]][["psurv"]],
        xlab = xlab,
        ylab = ylab,
-       pch = 16,
-       col = data[["dobs"]]$color,
+       type = "n",
        main = main)
+  
   # one line by replicate
   by(data[["dtheo"]], list(data[["dtheo"]]$conc),
      function(x) {
        lines(x$t, x$psurv, # lines
              col = x$color)
      })
+  
+  # points
+  if (adddata) {
+    points(data[["dobs"]][["t"]],
+           data[["dobs"]][["psurv"]],
+           pch = 20,
+           col = data[["dobs"]]$color)
+  }
   if (addlegend) {
     legend("bottomleft",
            legend = unique(data[["dobs"]]$conc),
-           pch = 16,
+           lty = 1,
            bty = "n",
            cex = 1,
            ncol = 2,
@@ -226,45 +236,36 @@ survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main, addlegend) {
   }
 }
 
-survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, ci, dataCIm) {
-  if (ci) {
-    survFitPlotTKTDGenericNoOnePlotCi(data, xlab, ylab, dataCIm)
-  } else {
-    survFitPlotTKTDGenericNoOnePlotNoCi(data, xlab, ylab)
-  }
-}
+survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, dataCIm, adddata) {
+  dobs <- split(data[["dobs"]], data[["dobs"]]$conc)
+  dtheo <- split(data[["dtheo"]], data[["dtheo"]]$conc)
+  
+  delta <- 0.01 * (max(data[["dobs"]]$t) - min(data[["dobs"]]$t))
 
-survFitPlotTKTDGenericNoOnePlotCi <- function(data, xlab, ylab, dataCIm) {
-  # one line by replicate
-  by(data[["dtheo"]], list(data[["dtheo"]]$conc),
-     function(x) {
-       plot(x[, "t"],
-            x[, "psurv"],
-            xlab = xlab,
-            ylab = ylab,
-            type = "n",
-            ylim = c(0, 1),
-            col = x[, "color"])
-       lines(x[, "t"], x[, "psurv"], # lines
-             col = x[, "color"])
-     })
-}
-
-survFitPlotTKTDGenericNoOnePlotNoCi <- function(data, xlab, ylab) {
-  # one line by replicate
-  by(data[["dtheo"]], list(data[["dtheo"]]$conc),
-     function(x) {
-       plot(x[, "t"],
-            x[, "psurv"],
-            xlab = xlab,
-            ylab = ylab,
-            type = "n",
-            ylim = c(0, 1),
-            col = x[, "color"],
-            main = paste0("Concentration : ", unique(x[, "conc"])))
-       lines(x[, "t"], x[, "psurv"],
-             col = x[, "color"])
-     })
+  mapply(function(x, y) {
+    plot(x[, "t"],
+         x[, "psurv"],
+         xlab = xlab,
+         ylab = ylab,
+         type = "n",
+         ylim = c(0, 1),
+         main = paste0("Concentration = ", unique(x[, "conc"])),
+         col = x[, "color"])
+    lines(x[, "t"], x[, "psurv"], # lines
+          col = x[, "color"])
+    
+    if (adddata) { 
+      points(y[, "t"],
+             y[, "psurv"],
+             pch = 20) # points
+      segments(y[, "t"], y[, "qinf95"],
+               y[, "t"], y[, "qsup95"])
+      segments(y[, "t"] - delta, y[, "qinf95"],
+               y[, "t"] + delta, y[, "qinf95"])
+      segments(y[, "t"] - delta, y[, "qsup95"],
+               y[, "t"] + delta, y[, "qsup95"])
+    }
+  }, x = dtheo, y = dobs)
 }
 
 survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, ci, dataCI,
@@ -293,13 +294,9 @@ survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main, addlegend) {
   }
 }
 
-survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, main, ci, dataCI,
+survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, main, dataCI,
                                        dataCIm, conf.int) {
-  if (ci) {
     survFitPlotTKTDGGNoOnePlotCi(data, xlab, ylab, main, dataCI, dataCIm, conf.int)
-  } else {
-    survFitPlotTKTDGGNoOnePlotNoCi(data, xlab, ylab, main)
-  }
 }
 
 survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
@@ -323,16 +320,3 @@ survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
     theme_minimal() +
     scale_color_discrete(guide = "none")
 }
-
-survFitPlotTKTDGGNoOnePlotNoCi <- function(data, xlab, ylab, main) {
-  ggplot(data$dobs,
-         aes(x = t, y = psurv, colour = factor(conc))) +
-    geom_point() +
-    geom_line(data = data$dtheo) +
-    facet_wrap(~conc) +
-    labs(x = xlab, y = ylab) + ggtitle(main) +
-    ylim(c(0, 1)) +
-    theme_minimal() +
-    scale_color_discrete(guide = "none")
-}
-
