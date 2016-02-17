@@ -9,6 +9,8 @@
 #' @param main A main title for the plot.
 #' @param ci if \code{TRUE}, draws the 95 \% credible limits of the fitted curve.
 #' @param one.plot if \code{TRUE}, draw all the estimeted curves in one plot.
+#' @param adddata if \code{TRUE}, adds the observed data with confidence interval
+#' to the plot
 #' @param addlegend if \code{TRUE}, adds a default legend to the plot.
 #' @param style Graphical method: \code{generic} or \code{ggplot}.
 #' @param \dots Further arguments to be passed to generic methods.
@@ -268,25 +270,26 @@ survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, dataCIm, adddata) 
   }, x = dtheo, y = dobs)
 }
 
-survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, ci, dataCI,
-                              dataCIm, addlegend) {
+survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, dataCI,
+                              dataCIm, adddata, addlegend) {
   
   if (one.plot) {
-    if (ci) warning("Credible intervals are only evalables in grid plot !")
-    survFitPlotTKTDGGOnePlot(data, xlab, ylab, main, addlegend)
+    survFitPlotTKTDGGOnePlot(data, xlab, ylab, main, adddata, addlegend)
   } else {
-    survFitPlotTKTDGGNoOnePlot(data, xlab, ylab, main, ci, dataCI, dataCIm, conf.int)
+    survFitPlotTKTDGGNoOnePlot(data, xlab, ylab, main, dataCI, dataCIm,
+                               adddata)
   }
 }
 
-survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main, addlegend) {
-  gf <- ggplot(data$dobs, aes(x = t, y = psurv, colour = factor(conc))) +
-    geom_point() +
-    geom_line(data = dataCIm)
-  geom_line(data = data$dtheo) +
+survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main, adddata, addlegend) {
+  gf <- ggplot(data$dobs) +
+    geom_line(aes(x = t, y = psurv, colour = factor(conc)), data = data$dtheo) +
     labs(x = xlab, y = ylab) + ggtitle(main) +
     ylim(c(0, 1)) +
     theme_minimal()
+  if (adddata) {
+    gf <- gf + geom_point(aes(x = t, y = psurv, colour = factor(conc)), data = data$dobs)
+  }
   if (addlegend) {
     gf + scale_color_discrete("Concentrations")
   } else {
@@ -295,23 +298,11 @@ survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main, addlegend) {
 }
 
 survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, main, dataCI,
-                                       dataCIm, conf.int) {
-    survFitPlotTKTDGGNoOnePlotCi(data, xlab, ylab, main, dataCI, dataCIm, conf.int)
-}
-
-survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
-                                         dataCIm, conf.int) {
-  ggplot(data$dobs,
-         aes(x = t, y = psurv, colour = factor(conc))) +
-    geom_point(color = "black") +
-    geom_segment(aes(x = t, xend = t, y = qinf95, yend = qsup95),
-                 arrow = arrow(length = unit(0.25, "cm"), angle = 90,
-                               ends = "both"), data$obs, color = "gray",
-                 size = 0.5) +
+                                       dataCIm, adddata) {
+  gf <- ggplot(data$dobs) +
     geom_line(data = dataCIm, aes(x = time, y = value, group = variable),
               alpha = 0.05) +
     geom_line(data = dataCI, aes(x = time, y = q50), linetype = 'dashed', color = "black") +
-    geom_line(data = data$dtheo, color = "red") +
     geom_line(data = dataCI, aes(x = time, y = qinf95), linetype = 'dashed', color = "black") +
     geom_line(data = dataCI, aes(x = time, y = qsup95), linetype = 'dashed', color = "black") +
     facet_wrap(~conc) +
@@ -319,4 +310,14 @@ survFitPlotTKTDGGNoOnePlotCi <- function(data, xlab, ylab, main, dataCI,
     ylim(c(0, 1)) +
     theme_minimal() +
     scale_color_discrete(guide = "none")
+  if (adddata) {
+    gf +
+      geom_point(aes(x = t, y = psurv, colour = factor(conc)), color = "black") +
+      geom_segment(aes(x = t, xend = t, y = qinf95, yend = qsup95),
+                   arrow = arrow(length = unit(0.25, "cm"), angle = 90,
+                                 ends = "both"), data$obs, color = "gray",
+                   size = 0.5)
+  } else {
+    gf
+  }
 }
