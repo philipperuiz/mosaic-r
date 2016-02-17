@@ -1,7 +1,10 @@
 #' Plotting method for survFitTKTD objects
 #' 
+#' This function plots time-response fits for each concentration of survival
+#' analysis (a.k.a. \code{survFitTKTD} objects).
+#' 
 #' @param x An object of class \code{survFitTKTD}.
-#' @param xlab A label for the \eqn{X}-axis, by default \code{Concentrations}.
+#' @param xlab A label for the \eqn{X}-axis, by default \code{Time}.
 #' @param ylab A label for the \eqn{Y}-axis, by default \code{Survival rate}.
 #' @param main A main title for the plot.
 #' @param ci if \code{TRUE}, draws the 95 \% credible limits of the fitted curve.
