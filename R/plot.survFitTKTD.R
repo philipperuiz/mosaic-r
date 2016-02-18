@@ -7,7 +7,8 @@
 #' @param xlab A label for the \eqn{X}-axis, by default \code{Time}.
 #' @param ylab A label for the \eqn{Y}-axis, by default \code{Survival rate}.
 #' @param main A main title for the plot.
-#' @param ci if \code{TRUE}, draws the 95 \% credible limits of the fitted curve.
+#' @param spaghetti if \code{TRUE}, the credible interval is drawn by  multiple
+#' curves
 #' @param one.plot if \code{TRUE}, draw all the estimeted curves in one plot.
 #' @param adddata if \code{TRUE}, adds the observed data with confidence interval
 #' to the plot
@@ -29,28 +30,25 @@ plot.survFitTKTD <- function(x,
                              xlab = "Time",
                              ylab = "Survival rate",
                              main = NULL,
+                             spaghetti = FALSE,
                              one.plot = TRUE,
                              adddata = FALSE,
                              addlegend = FALSE,
                              style = "generic", ...) {
   
-  data <- survFitPlotDataTKTD(x)
-  
   conf.int <- if (adddata && !one.plot) { survTKTDConfInt(x) } else NULL
-  if (adddata && !one.plot) data$dobs <- cbind(data$dobs,
-                                               qinf95 = conf.int["qinf95",],
-                                               qsup95 = conf.int["qsup95",])
-  dataCI <- if (!one.plot) { survFitPlotCITKTD(x) } else NULL
-  dataCIm <- if (!one.plot) { melt(dataCI,
+  
+  data.credInt <- survFitPlotCITKTD(x)
+  dataCIm <- if (!one.plot) { melt(data.credInt,
                                    id.vars = c("conc", "time")) } else NULL
   
   if (style == "generic") {
-    survFitPlotTKTDGeneric(data, xlab, ylab, main, one.plot, dataCIm,
-                           adddata, addlegend)
+    survFitPlotTKTDGeneric(data.credInt, xlab, ylab, main, one.plot, spaghetti,
+                           dataCIm, adddata, addlegend)
   }
   else if (style == "ggplot") {
-    survFitPlotTKTDGG(data, xlab, ylab, main, one.plot, dataCI, dataCIm,
-                      adddata, addlegend)
+    survFitPlotTKTDGG(data.credInt, xlab, ylab, main, one.plot, spaghetti,
+                      dataCIm, adddata, addlegend)
   }
   else stop("Unknown style")
 }
@@ -69,45 +67,6 @@ Surv <- function(Cw, time, ks, ke, NEC, m0)
     }
   }
   return(S)
-}
-
-survFitPlotDataTKTD <- function(x) {
-  # INPUT
-  # x : An object of class survFitTKTD
-  # OUTPUT
-  # A list of - dobs : observed values
-  #           - dtheo : estimated values
-  npoints <- 100
-  dtheo <- data.frame(conc = numeric(), t = numeric(), psurv = numeric())
-  
-  concobs <- unique(x$transformed.data$conc)
-  tfin <- seq(0, max(x$jags.data$t), length.out = npoints)
-  
-  # parameters
-  ks <- x$estim.par["ks", "median"]
-  ke <- x$estim.par["ke", "median"]
-  nec <- x$estim.par["nec", "median"]
-  m0 <- x$estim.par["m0", "median"]
-  
-  for (i in 1:length(concobs)) {
-    for (j in 1:npoints) {
-      psurv <- Surv(Cw = concobs[i], time = tfin[j],
-                    ks = ks, ke = ke,
-                    NEC = nec,
-                    m0 = m0)
-      
-      dtheo <- rbind(dtheo, data.frame(conc = concobs[i],
-                                       t = tfin[j],
-                                       psurv = psurv))
-    }
-  }
-  
-  dobs <- data.frame(conc = x$transformed.data$conc,
-                     t = x$transformed.data$time, 
-                     psurv = x$transformed.data$N_alive / x$transformed.data$N_init)
-  
-  return(list(dtheo = dtheo,
-              dobs = dobs))
 }
 
 #' @importFrom stats aggregate binom.test
@@ -183,21 +142,29 @@ survFitPlotCITKTD <- function(x) {
   
   dtheof <- cbind(qinf95, qsup95, q50, dtheof)
   
-  return(dtheof)
+  dobs <- data.frame(conc = x$transformed.data$conc,
+                     t = x$transformed.data$time, 
+                     psurv = x$transformed.data$N_alive / x$transformed.data$N_init)
+  
+  return(list(dtheo = dtheof,
+              dobs = dobs))
 }
 
-survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot, dataCIm,
-                                   adddata, addlegend) {
+survFitPlotTKTDGeneric <- function(data.credInt, xlab, ylab, main, one.plot,
+                                   spaghetti, dataCIm, adddata, addlegend) {
   # vector color
-  data[["dobs"]]$color <- as.numeric(as.factor(data[["dobs"]][["conc"]]))
-  data[["dtheo"]]$color <- as.numeric(as.factor(data[["dtheo"]][["conc"]]))
+  data[["dobs"]]$color <-
+    as.numeric(as.factor(data[["dobs"]][["conc"]]))
+  data[["dtheo"]]$color <-
+    as.numeric(as.factor(data[["dtheo"]][["conc"]]))
   
   if (one.plot) {
     survFitPlotTKTDGenericOnePlot(data, xlab, ylab, main, adddata, addlegend)
   } else {
     par(mfrow = plotMatrixGeometry(length(unique(data[["dobs"]][["conc"]]))))
     
-    survFitPlotTKTDGenericNoOnePlot(data, xlab, ylab, dataCIm, adddata)
+    survFitPlotTKTDGenericNoOnePlot(data, xlab, ylab, spaghetti,
+                                    dataCIm, adddata)
     
     par(mfrow = c(1, 1))
   }
@@ -215,7 +182,7 @@ survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main, adddata,
   # one line by replicate
   by(data[["dtheo"]], list(data[["dtheo"]]$conc),
      function(x) {
-       lines(x$t, x$psurv, # lines
+       lines(x$t, x$q50, # lines
              col = x$color)
      })
   
