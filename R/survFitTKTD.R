@@ -145,13 +145,16 @@ survTKTDPARAMS <- function(mcmc) {
   return(res)
 }
 
-#' Fit a Bayesian TKTD model for survival analysis among time
+#' Fits a Bayesian time-exposure-response model for survival analysis
 #' 
-#' The \code{survFitTKTD} function estimates the parameters of a TKTD model
-#' for survival analysis using Bayesian inference.
+#' The \code{survFitTKTD} function estimates the parameters of an  time-exposure-response
+#' model for survival analysis using Bayesian inference. In this model,
+#' the survival rate of individuals is modeled as a function of the pollutant's
+#' concentration with a mechanistic description of toxic effects on survival over
+#' time. Details of the model are presented in the vignette accompanying the package.
 #' 
 #' The function returns
-#' parameter estimates of the TKTD model.
+#' parameter estimates of the time-exposure-response model.
 #' 
 #' @param data An object of class \code{survData}.
 #' @param n.chains Number of MCMC chains. The minimum required number of chains
@@ -159,36 +162,21 @@ survTKTDPARAMS <- function(mcmc) {
 #' @param quiet If \code{TRUE}, make silent all prints and progress bars of
 #' JAGS compilation.
 #' 
-#' @return The function returns an object of class \code{survFitTKTD}. A list
-#' of 9 objects:
-#' \item{estim.par}{A table of the estimated parameters as medians and 95 \%
-#' credible intervals.}
-#' \item{mcmc}{An object of class \code{mcmc.list} with the posterior
-#' distributions.}
-#' \item{model}{A JAGS model object.}
-#' \item{parameters}{A list of the parameters names used in the model.}
-#' \item{n.chains}{An integer value corresponding to the number of chains used
-#' for the MCMC computation.}
-#' \item{n.iter}{A list of two numerical value corresponding to the beginning
-#' and the end of monitored iterations.}
-#' \item{n.thin}{A numerical value corresponding to the thinning interval.}
-#' \item{jags.data}{A list of data used by the internal \code{\link[rjags]{jags.model}}
-#' function. This object is intended for the case when the user wishes to use
-#' the \code{\link[rjags]{rjags}} package instead of the automatied estimation
-#' function.}
-#' \item{transformed.data}{The \code{survData} object.
-#' See \code{\link{survData}} for details.}
-#' 
-#' @author Marie Laure Delignette-Muller
-#' <marielaure.delignettemuller@@vetagro-sup.fr>, Philippe Ruiz
-#' <philippe.ruiz@@univ-lyon1.fr>
-#' 
-#' @references Plummer, M. (2013) JAGS Version 3.4.0 user manual.
-#' \url{http://sourceforge.net/projects/mcmc-jags/files/Manuals/3.x/jags_user_manual.pdf/download}
-#'
-#' Spiegelhalter, D., N. Best, B. Carlin, and A. van der Linde (2002) Bayesian
-#' measures of model complexity and fit (with discussion).  \emph{Journal of
-#' the Royal Statistical Society}, Series B 64, 583-639.
+#' @return The function returns an object of class \code{survFitTKTD}, which is
+#' a list with the following fields:
+#' \item{estim.par}{a table of the estimated parameters (medians) and 95 \%
+#' credible intervals}
+#' \item{mcmc}{an object of class \code{mcmc.list} with the posterior
+#' distributions}
+#' \item{model}{a JAGS model object}
+#' \item{parameters}{a list of the parameters names used in the model}
+#' \item{n.chains}{an integer value corresponding to the number of chains used
+#' for the MCMC computation}
+#' \item{n.iter}{a list of two indices indicating the beginning and end of
+#' monitored iterations}
+#' \item{n.thin}{a numerical value corresponding to the thinning interval}
+#' \item{jags.data}{a list a the data passed to the jags model}
+#' \item{transformed.data}{the \code{survData} object passed to the function}
 #'
 #' @keywords estimation
 #
