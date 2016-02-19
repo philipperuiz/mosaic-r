@@ -1,7 +1,26 @@
 #' Plotting method for survFitTKTD objects
 #' 
-#' This function plots time-response fits for each concentration of survival
-#' analysis (a.k.a. \code{survFitTKTD} objects).
+#' This function plots time-exposure-response fits for each concentration of
+#' survival analysis (a.k.a. \code{survFitTKTD} objects).
+#' 
+#' The fitted curve represents the \strong{estimated survival rate} as a function
+#' of time;
+#' When \code{adddata = TRUE} the black dots depict the \strong{observed survival
+#' rate} at each time point. Note that since our model does not take
+#' inter-replicate variability into consideration, replicates are systematically
+#' pooled in this plot.
+#' The function plots both 95 \% credible intervals for the estimated survival
+#' rate (by default the red area around the fitted curve) and 95 \% confidence
+#' intervals for the observed survival rate (as black error bars if
+#' \code{adddata = TRUE}).
+#' Both types of intervals are taken at the same level. Typically
+#' a good fit is expected to display a large overlap between the two intervals.
+#' If \code{spaghetti = TRUE}, the credible intervals are represented by two
+#' dotted ines limiting the credible band, and a spaghetti plot is added to this
+#' band.
+#' It consists of the representation of simulated curves using parameter values
+#' sampled in the posterior distribution (2 \% of the MCMC chains are randomly
+#' taken for this sample).
 #' 
 #' @param x An object of class \code{survFitTKTD}.
 #' @param xlab A label for the \eqn{X}-axis, by default \code{Time}.
