@@ -36,17 +36,21 @@ plot.survFitTKTD <- function(x,
                              addlegend = FALSE,
                              style = "generic", ...) {
   
-  conf.int <- if (adddata && !one.plot) { survTKTDConfInt(x) } else NULL
+  conf.int <- survTKTDConfInt(x)
   
   data.credInt <- survFitPlotCITKTD(x)
   
-  dataCIm <- if (!one.plot && spaghetti) {
-    melt(data.credInt[["dtheoSp"]],
-         id.vars = c("conc", "time")) } else NULL
+  data.credInt[["dobs"]] <- data.frame(data.credInt[["dobs"]],
+                                       qinf95 = conf.int["qinf95", ],
+                                       qsup95 = conf.int["qsup95",])
+  
+  dataCIm <- melt(data.credInt[["dtheoSp"]],
+                  id.vars = c("conc", "time"))
+  
   
   if (style == "generic") {
     survFitPlotTKTDGeneric(data.credInt, xlab, ylab, main, one.plot, spaghetti,
-                           conf.int, dataCIm, adddata, addlegend)
+                           dataCIm, adddata, addlegend)
   }
   else if (style == "ggplot") {
     survFitPlotTKTDGG(data.credInt, xlab, ylab, main, one.plot, spaghetti,
@@ -155,7 +159,7 @@ survFitPlotCITKTD <- function(x) {
 }
 
 survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot,
-                                   spaghetti, conf.int, dataCIm, adddata,
+                                   spaghetti, dataCIm, adddata,
                                    addlegend) {
   # vector color
   data[["dobs"]]$color <-
@@ -168,7 +172,7 @@ survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot,
   } else {
     par(mfrow = plotMatrixGeometry(length(unique(data[["dobs"]][["conc"]]))))
     
-    survFitPlotTKTDGenericNoOnePlot(data, xlab, ylab, spaghetti, conf.int,
+    survFitPlotTKTDGenericNoOnePlot(data, xlab, ylab, spaghetti,
                                     dataCIm, adddata)
     
     par(mfrow = c(1, 1))
@@ -212,14 +216,11 @@ survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main, adddata,
 }
 
 survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, spaghetti,
-                                            conf.int, dataCIm, adddata) {
-  
-  data[["dobs"]] <- data.frame(data[["dobs"]], qinf95 = conf.int["qinf95", ],
-                               qsup95 = conf.int["qsup95",])
+                                            dataCIm, adddata) {
   
   dobs <- split(data[["dobs"]], data[["dobs"]]$conc)
   dtheoQ <- split(data[["dtheoQ"]], data[["dtheoQ"]]$conc)
-  daCIm <- split(dataCIm, dataCIm$conc)
+  if (spaghetti) { dataCIm <- split(dataCIm, dataCIm$conc) }
   
   delta <- 0.01 * (max(data[["dobs"]]$time) - min(data[["dobs"]]$time))
   
@@ -242,7 +243,7 @@ survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, spaghetti,
     } else {
       polygon(c(x[, "time"], rev(x[, "time"])), c(x[, "qinf95"],
                                                   rev(x[, "qsup95"])),
-              col = cicol, border = NA)
+              col = "pink", border = NA)
     }
     
     lines(x[, "time"], x[, "q50"], # lines
@@ -270,25 +271,27 @@ survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, spaghetti,
   }, x = dtheoQ, y = dobs, z = dataCIm)
 }
 
-survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, dataCI,
+survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, spaghetti,
                               dataCIm, adddata, addlegend) {
   
   if (one.plot) {
     survFitPlotTKTDGGOnePlot(data, xlab, ylab, main, adddata, addlegend)
   } else {
-    survFitPlotTKTDGGNoOnePlot(data, xlab, ylab, main, dataCI, dataCIm,
-                               adddata)
+    survFitPlotTKTDGGNoOnePlot(data, xlab, ylab, main, spaghetti,
+                               dataCIm, adddata)
   }
 }
 
 survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main, adddata, addlegend) {
-  gf <- ggplot(data$dobs) +
-    geom_line(aes(x = t, y = psurv, colour = factor(conc)), data = data$dtheo) +
+  gf <- ggplot(data[["dobs"]]) +
+    geom_line(aes(x = time, y = q50, colour = factor(conc)),
+              data = data[["dtheoQ"]]) +
     labs(x = xlab, y = ylab) + ggtitle(main) +
     ylim(c(0, 1)) +
     theme_minimal()
   if (adddata) {
-    gf <- gf + geom_point(aes(x = t, y = psurv, colour = factor(conc)), data = data$dobs)
+    gf <- gf + geom_point(aes(x = time, y = psurv, colour = factor(conc)),
+                          data = data[["dobs"]])
   }
   if (addlegend) {
     gf + scale_color_discrete("Concentrations")
@@ -297,14 +300,24 @@ survFitPlotTKTDGGOnePlot <- function(data, xlab, ylab, main, adddata, addlegend)
   }
 }
 
-survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, main, dataCI,
+survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, main, spaghetti,
                                        dataCIm, adddata) {
-  gf <- ggplot(data$dobs) +
-    geom_line(data = dataCIm, aes(x = time, y = value, group = variable),
-              alpha = 0.05) +
-    geom_line(data = dataCI, aes(x = time, y = q50), linetype = 'dashed', color = "black") +
-    geom_line(data = dataCI, aes(x = time, y = qinf95), linetype = 'dashed', color = "black") +
-    geom_line(data = dataCI, aes(x = time, y = qsup95), linetype = 'dashed', color = "black") +
+  if (spaghetti) {
+    gf <- ggplot(data[["dobs"]]) +
+      geom_line(data = dataCIm, aes(x = time, y = value, group = variable),
+                alpha = 0.05)
+  } else {
+    gf <- ggplot(data[["dobs"]]) +
+      geom_ribbon(data = data[["dtheoQ"]], aes(x = time, ymin = qinf95,
+                                               ymax = qsup95),
+                  fill = "pink", col = "pink", alpha = 0.4)
+  }
+  gf <- gf + geom_line(data = data[["dtheoQ"]], aes(x = time, y = q50),
+                       linetype = 'dashed', color = "black") +
+    geom_line(data = data[["dtheoQ"]], aes(x = time, y = qinf95),
+              linetype = 'dashed', color = "black") +
+    geom_line(data = data[["dtheoQ"]], aes(x = time, y = qsup95),
+              linetype = 'dashed', color = "black") +
     facet_wrap(~conc) +
     labs(x = xlab, y = ylab) + ggtitle(main) +
     ylim(c(0, 1)) +
@@ -312,10 +325,11 @@ survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, main, dataCI,
     scale_color_discrete(guide = "none")
   if (adddata) {
     gf +
-      geom_point(aes(x = t, y = psurv, colour = factor(conc)), color = "black") +
-      geom_segment(aes(x = t, xend = t, y = qinf95, yend = qsup95),
-                   arrow = arrow(length = unit(0.25, "cm"), angle = 90,
-                                 ends = "both"), data$obs, color = "gray",
+      geom_point(aes(x = time, y = psurv, colour = factor(conc)),
+                 data = data[["obs"]], color = "black") +
+      geom_segment(aes(x = time, xend = time, y = qinf95, yend = qsup95),
+                   arrow = arrow(length = unit(0.15, "cm"), angle = 90,
+                                 ends = "both"), data[["obs"]], color = "gray",
                    size = 0.5)
   } else {
     gf
