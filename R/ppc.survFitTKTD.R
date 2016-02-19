@@ -1,19 +1,22 @@
 #' Posterior predictive check plot for survFitTKTD objects
 #'
-#' The \code{ppc} function plot the observed versus predicted values for the
-#' \code{survFitTKTD} objects.
+#' The \code{ppc} function plots the predicted values with 95\% credible intervals
+#' versus the observed values for \code{survFitTKTD} objects.
 #' 
-#' The coordinates of black points are the obseved value of the number of survivor
-#' (poolled replicates) for a given concentration versus the point estimates
-#' (predicted value).
-#' The 95 \% prediction intervals containing the corresponding observed value are
-#' colored in green and the others are colored in red.
-#' To do a better representation, the line 0, 1 is represented by steps if the
-#' number of observed values is less than 20.
+#' The coordinates of black points are the observed values of the number of survivor
+#' (poolled replicates) for a given concentration (x-scale) and the corresponding 
+#' predicted values (y-scale). 95 \% prediction intervals are added to each predicted
+#' value, colored in green if this interval contains the observed value and in red
+#' in the other case.
+#' As replicates are shifted on the x-axis, the bisecting line (y = x), is
+#' represented by steps, and is added to the plot in order to see if each
+#' prediction interval contains each observed value. 
 #'
 #' @param x An object of class \code{survFitTKTD}
-#' @param style Graphical package method: \code{generic} or \code{ggplot}.
-#' @param \dots Further arguments to be passed to generic methods.
+#' @param remove.someLabels if \code{TRUE}, removes 3/4 of X-axis labels in
+#' \code{'ggplot'} style to avoid the label overlap
+#' @param style Graphical package method: \code{generic} or \code{ggplot}
+#' @param \dots Further arguments to be passed to generic methods
 #'
 #' @examples
 #'
@@ -36,14 +39,15 @@
 #' @importFrom graphics plot
 #' 
 #' @export
-ppc.survFitTKTD <- function(x, style = "generic", ...) {
+ppc.survFitTKTD <- function(x, remove.someLabels = FALSE,
+                            style = "generic", ...) {
   if (!is(x, "survFitTKTD"))
     stop("x is not of class 'survFitTKTD'!")
   
   xlab <- "Observed Nbr. of survivor"
   ylab <- "Predicted Nbr. of survivor"
   
-  ppc_gen(EvalsurvTKTDPpc(x), style, xlab, ylab)
+  ppc_gen(EvalsurvTKTDPpc(x), style, xlab, ylab, remove.someLabels)
 }
 
 #' @importFrom stats rbinom quantile
