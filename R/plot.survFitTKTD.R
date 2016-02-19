@@ -40,8 +40,9 @@ plot.survFitTKTD <- function(x,
   
   data.credInt <- survFitPlotCITKTD(x)
   
-  dataCIm <- if (!one.plot) { melt(data.credInt[["dtheo"]],
-                                   id.vars = c("conc", "time")) } else NULL
+  dataCIm <- if (!one.plot && spaghetti) {
+    melt(data.credInt[["dtheoSp"]],
+         id.vars = c("conc", "time")) } else NULL
   
   if (style == "generic") {
     survFitPlotTKTDGeneric(data.credInt, xlab, ylab, main, one.plot, spaghetti,
@@ -121,33 +122,35 @@ survFitPlotCITKTD <- function(x) {
     }
   }
   
-  dtheof <- do.call("rbind", dtheo)
-  dtheof <- as.data.frame(cbind(rep(concobs, rep(npoints, length(concobs))),
+  dtheoSp <- do.call("rbind", dtheo)
+  dtheoSp <- as.data.frame(cbind(rep(concobs, rep(npoints, length(concobs))),
                                 rep(tfin, length(concobs)),
-                                dtheof))
-  names(dtheof) <- c("conc", "time", paste0("X", 1:length(sel)))
+                                dtheoSp))
+  names(dtheoSp) <- c("conc", "time", paste0("X", 1:length(sel)))
   
   # quantile
   qinf95 = NULL
   qsup95 = NULL
   q50 = NULL
   
-  for (i in 1:dim(dtheof)[1]) {
-    qinf95[i] <- quantile(dtheof[i, 3:length(dtheof)],
+  for (i in 1:dim(dtheoSp)[1]) {
+    qinf95[i] <- quantile(dtheoSp[i, 3:length(dtheoSp)],
                           probs = 0.025, na.rm = TRUE)
-    qsup95[i] <- quantile(dtheof[i, 3:length(dtheof)],
+    qsup95[i] <- quantile(dtheoSp[i, 3:length(dtheoSp)],
                           probs = 0.975, na.rm = TRUE)
-    q50[i] <- quantile(dtheof[i, 3:length(dtheof)],
+    q50[i] <- quantile(dtheoSp[i, 3:length(dtheoSp)],
                        probs = 0.5, na.rm = TRUE)
   }
   
-  dtheof <- cbind(qinf95, qsup95, q50, dtheof)
+  dtheoQ <- data.frame(conc = dtheoSp[, "conc"], time = dtheoSp[, "time"],
+                       qinf95 = qinf95, qsup95 = qsup95, q50 = q50)
   
   dobs <- data.frame(conc = x$transformed.data$conc,
-                     t = x$transformed.data$time, 
+                     time = x$transformed.data$time, 
                      psurv = x$transformed.data$N_alive / x$transformed.data$N_init)
   
-  return(list(dtheo = dtheof,
+  return(list(dtheoQ = dtheoQ,
+              dtheoSp = dtheoSp,
               dobs = dobs))
 }
 
@@ -157,8 +160,10 @@ survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot,
   # vector color
   data[["dobs"]]$color <-
     as.numeric(as.factor(data[["dobs"]][["conc"]]))
-  data[["dtheo"]]$color <-
-    as.numeric(as.factor(data[["dtheo"]][["conc"]]))
+  data[["dtheoQ"]]$color <-
+    as.numeric(as.factor(data[["dtheoQ"]][["conc"]]))
+  data[["dtheoSp"]]$color <-
+    as.numeric(as.factor(data[["dtheoSp"]][["conc"]]))
   
   if (one.plot) {
     survFitPlotTKTDGenericOnePlot(data, xlab, ylab, main, adddata, addlegend)
@@ -174,7 +179,7 @@ survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot,
 
 survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main, adddata,
                                           addlegend) {
-  plot(data[["dobs"]][["t"]],
+  plot(data[["dobs"]][["time"]],
        data[["dobs"]][["psurv"]],
        xlab = xlab,
        ylab = ylab,
@@ -182,15 +187,15 @@ survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main, adddata,
        main = main)
   
   # one line by replicate
-  by(data[["dtheo"]], list(data[["dtheo"]]$conc),
+  by(data[["dtheoQ"]], list(data[["dtheoQ"]]$conc),
      function(x) {
-       lines(x$t, x$q50, # lines
+       lines(x$time, x$q50, # lines
              col = x$color)
      })
   
   # points
   if (adddata) {
-    points(data[["dobs"]][["t"]],
+    points(data[["dobs"]][["time"]],
            data[["dobs"]][["psurv"]],
            pch = 20,
            col = data[["dobs"]]$color)
@@ -215,11 +220,12 @@ survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, spaghetti,
                                qsup95 = conf.int["qsup95",])
   
   dobs <- split(data[["dobs"]], data[["dobs"]]$conc)
-  dtheo <- split(data[["dtheo"]], data[["dtheo"]]$conc)
+  dtheoSp <- split(data[["dtheoSp"]], data[["dtheoSp"]]$conc)
+  dtheoQ <- split(data[["dtheoQ"]], data[["dtheoQ"]]$conc)
   
-  delta <- 0.01 * (max(data[["dobs"]]$t) - min(data[["dobs"]]$t))
+  delta <- 0.01 * (max(data[["dobs"]]$t) - min(data[["dobs"]]$time))
 
-  mapply(function(x, y, z) {
+  mapply(function(x, y) {
     plot(x[, "time"],
          x[, "q50"],
          xlab = xlab,
@@ -228,26 +234,42 @@ survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, spaghetti,
          ylim = c(0, 1),
          main = paste0("Concentration = ", unique(x[, "conc"])),
          col = x[, "color"])
+    
+    #     if (spaghetti) {
+    #       color <- "gray"
+    #       color_transparent <- adjustcolor(color, alpha.f = 0.05)
+    #       by(dataCIm, dataCIm$variable, function(x) {
+    #         lines(x$curv_conc, x$value, col = color_transparent)
+    #       })
+    #     } else {
+    polygon(c(x[, "time"], rev(x[, "time"])), c(x[, "qinf95"],
+                                                rev(x[, "qsup95"])),
+            col = cicol, border = NA)
+    # }
+    
     lines(x[, "time"], x[, "q50"], # lines
           col = x[, "color"])
+    lines(x[, "time"], x[, "qinf95"],
+          col = x[, "color"])
+    lines(x[, "time"], x[, "qsup95"], 
+          col = x[, "color"])
     
-    
-    if (adddata) { 
-      points(y[, "t"],
+    if (adddata) {
+      points(y[, "time"],
              y[, "psurv"],
              pch = 20,
              col = y[, "color"]) # points
-      segments(y[, "t"], y[, "qinf95"],
-               y[, "t"], y[, "qsup95"],
+      segments(y[, "time"], y[, "qinf95"],
+               y[, "time"], y[, "qsup95"],
                col = y[, "color"])
-      segments(y[, "t"] - delta, y[, "qinf95"],
-               y[, "t"] + delta, y[, "qinf95"],
+      segments(y[, "time"] - delta, y[, "qinf95"],
+               y[, "time"] + delta, y[, "qinf95"],
                col = y[, "color"])
-      segments(y[, "t"] - delta, y[, "qsup95"],
-               y[, "t"] + delta, y[, "qsup95"],
+      segments(y[, "time"] - delta, y[, "qsup95"],
+               y[, "time"] + delta, y[, "qsup95"],
                col = y[, "color"])
     }
-  }, x = dtheo, y = dobs)
+  }, x = dtheoQ, y = dobs)
 }
 
 survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, dataCI,
