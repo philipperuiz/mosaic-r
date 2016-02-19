@@ -46,7 +46,7 @@ plot.survFitTKTD <- function(x,
   
   if (style == "generic") {
     survFitPlotTKTDGeneric(data.credInt, xlab, ylab, main, one.plot, spaghetti,
-                           dataCIm, adddata, addlegend)
+                           conf.int, dataCIm, adddata, addlegend)
   }
   else if (style == "ggplot") {
     survFitPlotTKTDGG(data.credInt, xlab, ylab, main, one.plot, spaghetti,
@@ -162,9 +162,7 @@ survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot,
     as.numeric(as.factor(data[["dobs"]][["conc"]]))
   data[["dtheoQ"]]$color <-
     as.numeric(as.factor(data[["dtheoQ"]][["conc"]]))
-  data[["dtheoSp"]]$color <-
-    as.numeric(as.factor(data[["dtheoSp"]][["conc"]]))
-  
+
   if (one.plot) {
     survFitPlotTKTDGenericOnePlot(data, xlab, ylab, main, adddata, addlegend)
   } else {
@@ -220,12 +218,12 @@ survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, spaghetti,
                                qsup95 = conf.int["qsup95",])
   
   dobs <- split(data[["dobs"]], data[["dobs"]]$conc)
-  dtheoSp <- split(data[["dtheoSp"]], data[["dtheoSp"]]$conc)
   dtheoQ <- split(data[["dtheoQ"]], data[["dtheoQ"]]$conc)
+  daCIm <- split(dataCIm, dataCIm$conc)
   
-  delta <- 0.01 * (max(data[["dobs"]]$t) - min(data[["dobs"]]$time))
-
-  mapply(function(x, y) {
+  delta <- 0.01 * (max(data[["dobs"]]$time) - min(data[["dobs"]]$time))
+  
+  mapply(function(x, y, z) {
     plot(x[, "time"],
          x[, "q50"],
          xlab = xlab,
@@ -235,17 +233,17 @@ survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, spaghetti,
          main = paste0("Concentration = ", unique(x[, "conc"])),
          col = x[, "color"])
     
-    #     if (spaghetti) {
-    #       color <- "gray"
-    #       color_transparent <- adjustcolor(color, alpha.f = 0.05)
-    #       by(dataCIm, dataCIm$variable, function(x) {
-    #         lines(x$curv_conc, x$value, col = color_transparent)
-    #       })
-    #     } else {
-    polygon(c(x[, "time"], rev(x[, "time"])), c(x[, "qinf95"],
-                                                rev(x[, "qsup95"])),
-            col = cicol, border = NA)
-    # }
+    if (spaghetti) {
+      color <- "gray"
+      color_transparent <- adjustcolor(color, alpha.f = 0.05)
+      by(z, z$variable, function(x) {
+        lines(x[, "time"], x[, "value"], col = color_transparent)
+      })
+    } else {
+      polygon(c(x[, "time"], rev(x[, "time"])), c(x[, "qinf95"],
+                                                  rev(x[, "qsup95"])),
+              col = cicol, border = NA)
+    }
     
     lines(x[, "time"], x[, "q50"], # lines
           col = x[, "color"])
@@ -269,7 +267,7 @@ survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, spaghetti,
                y[, "time"] + delta, y[, "qsup95"],
                col = y[, "color"])
     }
-  }, x = dtheoQ, y = dobs)
+  }, x = dtheoQ, y = dobs, z = dataCIm)
 }
 
 survFitPlotTKTDGG <- function(data, xlab, ylab, main, one.plot, dataCI,
