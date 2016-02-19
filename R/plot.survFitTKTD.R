@@ -39,7 +39,8 @@ plot.survFitTKTD <- function(x,
   conf.int <- if (adddata && !one.plot) { survTKTDConfInt(x) } else NULL
   
   data.credInt <- survFitPlotCITKTD(x)
-  dataCIm <- if (!one.plot) { melt(data.credInt,
+  
+  dataCIm <- if (!one.plot) { melt(data.credInt[["dtheo"]],
                                    id.vars = c("conc", "time")) } else NULL
   
   if (style == "generic") {
@@ -150,8 +151,9 @@ survFitPlotCITKTD <- function(x) {
               dobs = dobs))
 }
 
-survFitPlotTKTDGeneric <- function(data.credInt, xlab, ylab, main, one.plot,
-                                   spaghetti, dataCIm, adddata, addlegend) {
+survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot,
+                                   spaghetti, conf.int, dataCIm, adddata,
+                                   addlegend) {
   # vector color
   data[["dobs"]]$color <-
     as.numeric(as.factor(data[["dobs"]][["conc"]]))
@@ -163,7 +165,7 @@ survFitPlotTKTDGeneric <- function(data.credInt, xlab, ylab, main, one.plot,
   } else {
     par(mfrow = plotMatrixGeometry(length(unique(data[["dobs"]][["conc"]]))))
     
-    survFitPlotTKTDGenericNoOnePlot(data, xlab, ylab, spaghetti,
+    survFitPlotTKTDGenericNoOnePlot(data, xlab, ylab, spaghetti, conf.int,
                                     dataCIm, adddata)
     
     par(mfrow = c(1, 1))
@@ -196,6 +198,7 @@ survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main, adddata,
   if (addlegend) {
     legend("bottomleft",
            legend = unique(data[["dobs"]]$conc),
+           pch = ifelse(adddata, 20, NA),
            lty = 1,
            bty = "n",
            cex = 1,
@@ -205,34 +208,44 @@ survFitPlotTKTDGenericOnePlot <- function(data, xlab, ylab, main, adddata,
   }
 }
 
-survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, dataCIm, adddata) {
+survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, spaghetti,
+                                            conf.int, dataCIm, adddata) {
+  
+  data[["dobs"]] <- data.frame(data[["dobs"]], qinf95 = conf.int["qinf95", ],
+                               qsup95 = conf.int["qsup95",])
+  
   dobs <- split(data[["dobs"]], data[["dobs"]]$conc)
   dtheo <- split(data[["dtheo"]], data[["dtheo"]]$conc)
   
   delta <- 0.01 * (max(data[["dobs"]]$t) - min(data[["dobs"]]$t))
 
-  mapply(function(x, y) {
-    plot(x[, "t"],
-         x[, "psurv"],
+  mapply(function(x, y, z) {
+    plot(x[, "time"],
+         x[, "q50"],
          xlab = xlab,
          ylab = ylab,
          type = "n",
          ylim = c(0, 1),
          main = paste0("Concentration = ", unique(x[, "conc"])),
          col = x[, "color"])
-    lines(x[, "t"], x[, "psurv"], # lines
+    lines(x[, "time"], x[, "q50"], # lines
           col = x[, "color"])
+    
     
     if (adddata) { 
       points(y[, "t"],
              y[, "psurv"],
-             pch = 20) # points
+             pch = 20,
+             col = y[, "color"]) # points
       segments(y[, "t"], y[, "qinf95"],
-               y[, "t"], y[, "qsup95"])
+               y[, "t"], y[, "qsup95"],
+               col = y[, "color"])
       segments(y[, "t"] - delta, y[, "qinf95"],
-               y[, "t"] + delta, y[, "qinf95"])
+               y[, "t"] + delta, y[, "qinf95"],
+               col = y[, "color"])
       segments(y[, "t"] - delta, y[, "qsup95"],
-               y[, "t"] + delta, y[, "qsup95"])
+               y[, "t"] + delta, y[, "qsup95"],
+               col = y[, "color"])
     }
   }, x = dtheo, y = dobs)
 }
