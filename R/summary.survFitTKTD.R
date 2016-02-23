@@ -14,16 +14,16 @@
 #'
 #' @examples
 #' # (1) Load the data
-#' data(cadmium1)
+#' data(propiconazole)
 #'
 #' # (2) Create a survData object
-#' cadmium1 <- survData(cadmium1)
+#' dat <- survData(propiconazole)
 #'
 #' \dontrun{
 #' # (3) Run the survFitTKTD function
-#' out <- survFitTT(dat, distr = "norm")
+#' out <- survFitTKTD(dat, distr = "norm")
 #'
-#' # (4) summarize the survFitTT object
+#' # (4) summarize the survFitTKTD object
 #' summary(out)
 #' }
 #'

@@ -21,14 +21,14 @@
 #' @examples
 #'
 #' # (1) Load the data
-#' data(cadmium1)
+#' data(propiconazole)
 #'
 #' # (2) Create an object of class "survData"
-#' dat <- survData(cadmium1)
+#' dat <- survData(propiconazole)
 #'
 #' \dontrun{
 #' # (3) Run the survFitTKTD function with the TKTD model
-#' out <- survFitTKTD(dat)
+#' out <- survFitTKTD(propiconazole)
 #'
 #' # (4) Plot observed versus predicted values
 #' ppc(out)

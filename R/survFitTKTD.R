@@ -183,14 +183,25 @@ survTKTDPARAMS <- function(mcmc) {
 #' @examples
 #' 
 #' # (1) Load the survival data
-#' data(cadmium1)
+#' data(propiconazole)
 #' 
 #' # (2) Create an object of class "survData"
-#' dat <- survData(cadmium1)
+#' dat <- survData(propiconazole)
 #' 
 #' \dontrun{
 #' # (3) Run the survFitTKTD function
 #' out <- survFitTKTD(dat)
+#' 
+#' # (4) Summary look the estimated values (parameters)
+#' out$estim.par
+#'
+#' # (5) Plot the fitted curve
+#' plot(out, adddata = TRUE)
+#'
+#' # (6) Plot the fitted curve with ggplot style and CI as spaghetti
+#' require(ggplot2)
+#' plot(out, spaghetti = TRUE , adddata = TRUE, 
+#'      style = "ggplot")
 #' }
 #' 
 #' @export
