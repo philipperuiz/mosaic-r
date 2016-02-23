@@ -21,7 +21,7 @@
 #'
 #' \dontrun{
 #' # (3) Run the survFitTKTD function
-#' out <- survFitTKTD(dat, distr = "norm")
+#' out <- survFitTKTD(dat)
 #'
 #' # (4) summarize the survFitTKTD object
 #' summary(out)
