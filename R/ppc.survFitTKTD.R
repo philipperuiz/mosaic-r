@@ -28,7 +28,7 @@
 #'
 #' \dontrun{
 #' # (3) Run the survFitTKTD function with the TKTD model
-#' out <- survFitTKTD(propiconazole)
+#' out <- survFitTKTD(dat)
 #'
 #' # (4) Plot observed versus predicted values
 #' ppc(out)
