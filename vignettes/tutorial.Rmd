@@ -283,32 +283,28 @@ between pollutant concentration, time and survival rate.
 Here is a typical session:
 ```{r, cache=TRUE}
 # (1) load dataset
-data(cadmium2)
+data(propiconazole)
 
 # (2) check structure and integrity of the dataset
-survDataCheck(cadmium2)
+survDataCheck(propiconazole)
 
 # (3) create a `survData` object
-dat <- survData(cadmium2)
+dat <- survData(propiconazole)
 
 # (4) represent the number of survivor as a function time
 plot(dat, style = "ggplot", pool.replicate = FALSE)
-plot(dat, concentration = 4.36, addlegend = TRUE, style = "ggplot",
-     pool.replicate = FALSE)
 
-# (5) represente the survival rate as a function of concentration
-plotDoseResponse(dat, target.time = 21, style = "ggplot")
-
-# (6) check information on the experimental design
+# (5) check information on the experimental design
 summary(dat)
 
-# (7) fit an time-exposure-response model at
+# (6) fit an time-exposure-response model at
 fit <- survFitTKTD(dat, quiet = TRUE)
 summary(fit)
 ```
 
 ```{r, cache=TRUE}
-plot(fit, style = "ggplot", adddata = TRUE)
+plot(fit, style = "ggplot", adddata = TRUE, one.plot = FALSE,
+     addlegend = TRUE)
 ```
 
 ```{r, cache=TRUE}
