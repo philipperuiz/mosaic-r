@@ -1,5 +1,14 @@
 === morse : MOdelling tools for Reproduction and Survival data in Ecotoxicology ===
 
+Version 2.3.0
+=============
+
+NEW FEATURES
+- add the 'survFitTKTD' function to analyse survData object with a time-exposure-
+  -response model.
+- add the S3 'plot', 'print' and 'summary' methods for the 'survFitTKTD' class.
+- add 'ppc.survFitTKTD' function.
+
 Version 2.2.0
 =============
 
