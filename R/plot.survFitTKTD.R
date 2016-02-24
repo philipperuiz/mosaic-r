@@ -63,6 +63,12 @@ plot.survFitTKTD <- function(x,
                                        qinf95 = conf.int["qinf95", ],
                                        qsup95 = conf.int["qsup95",])
   
+  # vector color
+  data.credInt[["dobs"]]$color <-
+    as.numeric(as.factor(data.credInt[["dobs"]][["conc"]]))
+  data.credInt[["dtheoQ"]]$color <-
+    as.numeric(as.factor(data.credInt[["dtheoQ"]][["conc"]]))
+  
   dataCIm <- melt(data.credInt[["dtheoSp"]],
                   id.vars = c("conc", "time"))
   
@@ -180,11 +186,6 @@ survFitPlotCITKTD <- function(x) {
 survFitPlotTKTDGeneric <- function(data, xlab, ylab, main, one.plot,
                                    spaghetti, dataCIm, adddata,
                                    addlegend) {
-  # vector color
-  data[["dobs"]]$color <-
-    as.numeric(as.factor(data[["dobs"]][["conc"]]))
-  data[["dtheoQ"]]$color <-
-    as.numeric(as.factor(data[["dtheoQ"]][["conc"]]))
 
   if (one.plot) {
     survFitPlotTKTDGenericOnePlot(data, xlab, ylab, main, adddata, addlegend)
@@ -268,9 +269,9 @@ survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, spaghetti,
     lines(x[, "time"], x[, "q50"], # lines
           col = x[, "color"])
     lines(x[, "time"], x[, "qinf95"],
-          col = x[, "color"])
+          col = x[, "color"], lty = 2)
     lines(x[, "time"], x[, "qsup95"], 
-          col = x[, "color"])
+          col = x[, "color"], lty = 2)
     
     if (adddata) {
       points(y[, "time"],
@@ -332,11 +333,11 @@ survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, main, spaghetti,
                   fill = "pink", col = "pink", alpha = 0.4)
   }
   gf <- gf + geom_line(data = data[["dtheoQ"]], aes(x = time, y = q50),
-                       linetype = 'dashed', color = "black") +
+                       linetype = 'dashed', color = data[["dtheoQ"]]$color) +
     geom_line(data = data[["dtheoQ"]], aes(x = time, y = qinf95),
-              linetype = 'dashed', color = "black") +
+              linetype = 'dashed', color = data[["dtheoQ"]]$color) +
     geom_line(data = data[["dtheoQ"]], aes(x = time, y = qsup95),
-              linetype = 'dashed', color = "black") +
+              linetype = 'dashed', color = data[["dtheoQ"]]$color) +
     facet_wrap(~conc) +
     labs(x = xlab, y = ylab) + ggtitle(main) +
     ylim(c(0, 1)) +
@@ -347,7 +348,7 @@ survFitPlotTKTDGGNoOnePlot <- function(data, xlab, ylab, main, spaghetti,
       geom_point(aes(x = time, y = psurv, colour = factor(conc)),
                  data = data[["obs"]], color = "black") +
       geom_segment(aes(x = time, xend = time, y = qinf95, yend = qsup95),
-                   arrow = arrow(length = unit(0.15, "cm"), angle = 90,
+                   arrow = arrow(length = unit(0.1, "cm"), angle = 90,
                                  ends = "both"), data[["obs"]], color = "gray",
                    size = 0.5)
   } else {
