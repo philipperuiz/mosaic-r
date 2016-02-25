@@ -273,19 +273,19 @@ survFitTKTD <- function(data,
   
   if (log10(estim.par["ks", "Q2.5"]) < priorBonds$log10ksmin ||
       log10(estim.par["ks", "Q97.5"]) > priorBonds$log10ksmax)
-    warning("ks posterior is out of ks prior")
+    warning("The ks estimation lies outsides the range of the ks prior !")
   
   if (log10(estim.par["ke", "Q2.5"]) < priorBonds$log10kemin ||
       log10(estim.par["ke", "Q97.5"]) > priorBonds$log10kemax)
-    warning("ke posterior is out of ke prior")
+    warning("The ke estimation lies outsides the range of the ke prior !")
   
   if (log10(estim.par["m0", "Q2.5"]) < priorBonds$log10m0min ||
       log10(estim.par["m0", "Q97.5"]) > priorBonds$log10m0max)
-    warning("m0 posterior is out of m0 prior")
+    warning("The m0 estimation lies outsides the range of the m0 prior !")
   
   if (log10(estim.par["nec", "Q2.5"]) < priorBonds$log10necmin ||
       log10(estim.par["nec", "Q97.5"]) > priorBonds$log10necmax)
-    warning("nec posterior is out of nec prior")
+    warning("The nec estimation lies outsides the range of the nec prior !")
   
   #OUTPUT
   OUT <- list(estim.par = estim.par,
