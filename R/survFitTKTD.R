@@ -253,7 +253,7 @@ survFitTKTD <- function(data,
   sampling.parameters <- modelSamplingParameters(model,
                                                  parameters, n.chains, quiet)
   
-  if (sampling.parameters$niter > 100000)
+  if (sampling.parameters$niter > 200000)
     stop("The model needs too many iterations to provide reliable parameter estimates !")
   
   # Sampling
