@@ -3,6 +3,8 @@ data(cadmium1)
 data(cadmium2)
 data(copper)
 data(chlordan)
+data(dichromate)
+data(propiconazole)
 data(zinc)
 
 # no error dataset
@@ -10,7 +12,9 @@ d <- list(cadmium1 = cadmium1,
           cadmium2 = cadmium2,
           copper = copper,
           chlordan = chlordan,
-          zinc = zinc)
+          dichromate = dichromate,
+          zinc = zinc,
+          propiconazole = propiconazole)
 
 ## tests
 
@@ -133,5 +137,19 @@ test_that("survFitTT", {
     } else {
       expect_true(out$det.part == "loglogisticbinom_2")
     }
+  })
+})
+
+test_that("survFitTKTD", {
+  skip_on_cran()
+  d.tktd <- list(cadmium1 = d[["cadmium1"]],
+                 chlordan = d[["chlordan"]])
+  lapply(d.tktd, function(x) {
+    dat <- survData(x)
+    expect_warning(out <- survFitTKTD(dat, quiet = T))
+    expect_is(out, "survFitTKTD")
+    expect_equal(typeof(out), "list")
+    expect_true(!is.null(out))
+    expect_true(any(!is.na(out)))
   })
 })
