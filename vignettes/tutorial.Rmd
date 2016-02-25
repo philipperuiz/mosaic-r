@@ -303,8 +303,7 @@ summary(fit)
 ```
 
 ```{r, cache=TRUE}
-plot(fit, style = "ggplot", adddata = TRUE, one.plot = FALSE,
-     addlegend = TRUE)
+plot(fit, style = "ggplot", adddata = TRUE, one.plot = FALSE)
 ```
 
 ```{r, cache=TRUE}
