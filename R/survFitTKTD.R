@@ -199,7 +199,6 @@ survTKTDPARAMS <- function(mcmc) {
 #' plot(out, adddata = TRUE)
 #'
 #' # (6) Plot the fitted curve with ggplot style and CI as spaghetti
-#' require(ggplot2)
 #' plot(out, spaghetti = TRUE , adddata = TRUE, 
 #'      style = "ggplot")
 #' }
