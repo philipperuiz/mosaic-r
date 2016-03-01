@@ -193,7 +193,7 @@ survTKTDPARAMS <- function(mcmc) {
 #' out <- survFitTKTD(dat)
 #' 
 #' # (4) Summary look the estimated values (parameters)
-#' out$estim.par
+#' summary(out)
 #'
 #' # (5) Plot the fitted curve
 #' plot(out, adddata = TRUE)
