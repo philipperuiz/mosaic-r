@@ -36,6 +36,29 @@
 #' @param \dots Further arguments to be passed to generic methods.
 #' 
 #' @keywords plot 
+#' 
+#' @examples
+#' 
+#' # (1) Load the survival data
+#' data(propiconazole)
+#' 
+#' # (2) Create an object of class "survData"
+#' dat <- survData(propiconazole)
+#' 
+#' \dontrun{
+#' # (3) Run the survFitTKTD function
+#' out <- survFitTKTD(dat)
+#'
+#' # (4) Plot the fitted curves in one plot 
+#' plot(out)
+#'
+#' # (5) Plot one fitted curve by concentration with credible limits as
+#' # spaghetti, data and confidence intervals
+#' # and with a ggplot style
+#' plot(out, spaghetti = TRUE , adddata = TRUE, one.plot = FALSE,
+#'      style = "ggplot")
+#' }
+#' 
 #' @export
 #' 
 #' @import ggplot2
