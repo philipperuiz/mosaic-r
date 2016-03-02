@@ -1,6 +1,7 @@
-#' Summary for survFitTKTD objects
+#' Summary for \code{survFitTKTD} objects
 #'
-#' The summary shows the quantiles of priors and posteriors on parameters
+#' This is the generic \code{summary} S3 methode for the \code{survFitTKTD} class.
+#' It shows the quantiles of priors and posteriors on parameters.
 #'
 #' @param object an object of class \code{survFitTKTD}
 #' @param quiet when \code{FALSE}, prints summary on standard output
@@ -9,8 +10,6 @@
 #' @return The function returns a list with the following fields:
 #' \item{Qpriors}{quantiles for the model's prior}
 #' \item{Qposteriors}{quantiles for the model's posteriors}
-#'
-#' @seealso survFitTKTD
 #'
 #' @examples
 #' # (1) Load the data

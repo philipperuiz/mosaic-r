@@ -147,7 +147,7 @@ survTKTDPARAMS <- function(mcmc) {
 
 #' Fits a Bayesian time-exposure-response model for survival analysis
 #' 
-#' The \code{survFitTKTD} function estimates the parameters of an  time-exposure-response
+#' This function estimates the parameters of an  time-exposure-response
 #' model for survival analysis using Bayesian inference. In this model,
 #' the survival rate of individuals is modeled as a function of the pollutant's
 #' concentration with a mechanistic description of toxic effects on survival over

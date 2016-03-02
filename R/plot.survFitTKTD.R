@@ -1,10 +1,11 @@
-#' Plotting method for survFitTKTD objects
+#' Plotting method for \code{survFitTKTD} objects
 #' 
-#' This function plots time-exposure-response fits for each concentration of
-#' survival analysis (a.k.a. \code{survFitTKTD} objects).
+#' This is the generic \code{plot} S3 method for the \code{survFitTKTD}.
+#' It plots time-exposure-response fits for each concentration of
+#' survival analysis.
 #' 
-#' The fitted curve represents the \strong{estimated survival rate} as a function
-#' of time;
+#' The fitted curves represent the \strong{estimated survival rate} as a function
+#' of time for each concentration;
 #' When \code{adddata = TRUE} the black dots depict the \strong{observed survival
 #' rate} at each time point. Note that since our model does not take
 #' inter-replicate variability into consideration, replicates are systematically
@@ -26,13 +27,13 @@
 #' @param xlab A label for the \eqn{X}-axis, by default \code{Time}.
 #' @param ylab A label for the \eqn{Y}-axis, by default \code{Survival rate}.
 #' @param main A main title for the plot.
-#' @param spaghetti if \code{TRUE}, the credible interval is drawn by  multiple
-#' curves
-#' @param one.plot if \code{TRUE}, draw all the estimeted curves in one plot.
+#' @param spaghetti if \code{TRUE}, the credible interval is represented by 
+#' multiple curves
+#' @param one.plot if \code{TRUE}, draws all the estimeted curves in one plot.
 #' @param adddata if \code{TRUE}, adds the observed data with confidence interval
 #' to the plot
 #' @param addlegend if \code{TRUE}, adds a default legend to the plot.
-#' @param style Graphical method: \code{generic} or \code{ggplot}.
+#' @param style graphical backend, can be \code{'generic'} or \code{'ggplot'}
 #' @param \dots Further arguments to be passed to generic methods.
 #' 
 #' @keywords plot 

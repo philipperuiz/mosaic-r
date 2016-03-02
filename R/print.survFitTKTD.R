@@ -7,8 +7,6 @@
 #' @param x An object of class \code{survFitTKTD}
 #' @param \dots Further arguments to be passed to generic methods.
 #' 
-#' @seealso \code{\link{survFitTKTD}}
-#' 
 #' @examples
 #' # (1) Load the data
 #' data(propiconazole)
