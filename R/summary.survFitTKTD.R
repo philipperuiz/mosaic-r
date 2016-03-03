@@ -36,12 +36,12 @@ summary.survFitTKTD <- function(object, quiet = FALSE, ...) {
   # quantiles of priors parameters
   n.iter <- object$n.iter$end - object$n.iter$start
   
-  # ke
-  log10ke <- qnorm(p = c(0.5, 0.025, 0.975),
-                   mean = object$jags.data$meanlog10ke,
-                   sd = 1 / sqrt(object$jags.data$taulog10ke))
+  # kd
+  log10kd <- qnorm(p = c(0.5, 0.025, 0.975),
+                   mean = object$jags.data$meanlog10kd,
+                   sd = 1 / sqrt(object$jags.data$taulog10kd))
   
-  ke <- 10^log10ke
+  kd <- 10^log10kd
   
   # ks
   log10ks <- qnorm(p = c(0.5, 0.025, 0.975),
@@ -64,7 +64,7 @@ summary.survFitTKTD <- function(object, quiet = FALSE, ...) {
   
   m0 <- 10^log10m0
   
-  res <- rbind(ke, ks, nec, m0)
+  res <- rbind(kd, ks, nec, m0)
   
   ans1 <- round(data.frame(res), digits = 3)
   colnames(ans1) <- c("50%", "2.5%", "97.5%")

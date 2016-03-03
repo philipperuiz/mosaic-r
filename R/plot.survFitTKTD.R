@@ -108,16 +108,16 @@ plot.survFitTKTD <- function(x,
   else stop("Unknown style")
 }
 
-Surv <- function(Cw, time, ks, ke, NEC, m0)
+Surv <- function(Cw, time, ks, kd, NEC, m0)
   # Fonction S ecrite en R pour la validation en simu ensuite
   # Cw est la concentration dans le milieu
 {
   S <- exp(-m0*time) # survie de base avec mortalite naturelle seule
   if (Cw > NEC) {
-    tNEC <- -(1/ke)*log(1 - NEC/Cw)
+    tNEC <- -(1/kd)*log(1 - NEC/Cw)
     if (time > tNEC) {
       # ajoute de la mortalite due au toxique
-      S <- S * exp( ks/ke*Cw*(exp(-ke*tNEC) -exp(-ke*time))
+      S <- S * exp( ks/kd*Cw*(exp(-kd*tNEC) -exp(-kd*time))
                     - ks*(Cw-NEC)*(time - tNEC) )
     }
   }
@@ -157,7 +157,7 @@ survFitPlotCITKTD <- function(x) {
   mctot <- do.call("rbind", x$mcmc)
   sel <- sample(nrow(mctot))[1:ceiling(nrow(mctot) / 50)]
   ks <- 10^mctot[, "log10ks"][sel]
-  ke <- 10^mctot[, "log10ke"][sel]
+  kd <- 10^mctot[, "log10kd"][sel]
   m0 <- 10^mctot[, "log10m0"][sel]
   nec <- 10^mctot[, "log10NEC"][sel]
   
@@ -168,7 +168,7 @@ survFitPlotCITKTD <- function(x) {
     for (i in 1:length(nec)) {
       for (j in 1:npoints) {
         dtheo[[k]][j, i] <- Surv(Cw = concobs[k], time = tfin[j],
-                                 ks = ks[i], ke = ke[i],
+                                 ks = ks[i], kd = kd[i],
                                  NEC = nec[i],
                                  m0 = m0[i])
       }
@@ -264,7 +264,7 @@ survFitPlotTKTDGenericNoOnePlot <- function(data, xlab, ylab, spaghetti,
   
   dobs <- split(data[["dobs"]], data[["dobs"]]$conc)
   dtheoQ <- split(data[["dtheoQ"]], data[["dtheoQ"]]$conc)
-  if (spaghetti) { dataCIm <- split(dataCIm, dataCIm$conc) }
+  dataCIm <- split(dataCIm, dataCIm$conc)
   
   delta <- 0.01 * (max(data[["dobs"]]$time) - min(data[["dobs"]]$time))
   

@@ -55,7 +55,7 @@ ppc.survFitTKTD <- function(x, remove.someLabels = FALSE,
 EvalsurvTKTDPpc <- function(x) {
   tot.mcmc <- do.call("rbind", x$mcmc)
 
-  ke <- 10^sample(tot.mcmc[, "log10ke"], 5000)
+  kd <- 10^sample(tot.mcmc[, "log10kd"], 5000)
   ks <- 10^sample(tot.mcmc[, "log10ks"], 5000)
   nec <- 10^sample(tot.mcmc[, "log10NEC"], 5000)
   m0 <- 10^sample(tot.mcmc[, "log10m0"], 5000)
@@ -71,15 +71,15 @@ EvalsurvTKTDPpc <- function(x) {
   NsurvPred <- matrix(NA, nrow = 5000, ncol = n)
   
   for (i in 1:n) {
-    for (j in 1:length(ke)) {
+    for (j in 1:length(kd)) {
       xcor <- ifelse(xconc[i] > 0, xconc[i], 10)
       R <- ifelse(xconc[i] > nec[j], nec[j]/xcor, 0.1)
-      tNEC <- ifelse(xconc[i] > nec[j], -1 / ke[j] * log(1 - R), bigtime)
+      tNEC <- ifelse(xconc[i] > nec[j], -1 / kd[j] * log(1 - R), bigtime)
       tref <- max(tprec[i], tNEC)
       psurv <- exp(-m0 * (t[i] - tprec[i]) +
                      if (t[i] > tNEC) {
                        -ks * ((xconc[i] - nec[j]) * (t[i] - tref) +
-                                xconc[i]/ke[j] * (exp(-ke[j] * t[i]) - exp(-ke[j] * tref)))
+                                xconc[i]/kd[j] * (exp(-kd[j] * t[i]) - exp(-kd[j] * tref)))
                      } else {
                        0
                      })
