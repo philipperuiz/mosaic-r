@@ -121,7 +121,9 @@ test_that("survData", {
 
 test_that("survFitTT", {
   skip_on_cran()
-  lapply(d, function(x) {
+  d_without_cadmium1 <- d
+  d_without_cadmium1[["cadmium1"]] <- NULL
+  lapply(d_without_cadmium1, function(x) {
     dat <- survData(x)
     # select Data at target.time
     dataTT <- morse:::selectDataTT(dat, max(dat$time))
@@ -138,6 +140,8 @@ test_that("survFitTT", {
       expect_true(out$det.part == "loglogisticbinom_2")
     }
   })
+  dat <- survData(cadmium1)
+  expect_warning(survFitTT(dat, quiet = T))
 })
 
 test_that("survFitTKTD", {
